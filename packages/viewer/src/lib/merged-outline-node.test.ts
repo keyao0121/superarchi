@@ -288,7 +288,7 @@ describe('merged outline proxy bookkeeping', () => {
     f.dispose()
   })
 
-  test('releases real RenderObjects and dispose listeners across five hover cycles', () => {
+  test('keeps one RenderObject across five hover cycles and releases it with its source geometry', () => {
     const f = makeOutlineFixture()
     let disposed = 0
     const renderer = {
@@ -327,10 +327,11 @@ describe('merged outline proxy bookkeeping', () => {
       expect(listeners(f.geometry)).toBe(initialGeometryListeners + 1)
       f.outline.secondaryObjects.length = 0
       f.tick()
-      expect(listeners(f.geometry)).toBe(initialGeometryListeners)
-      expect(materials.reduce((sum, material) => sum + listeners(material), 0)).toBe(0)
-      expect(disposed).toBe(i + 1)
+      // Deselected, the proxy stays parked: nothing is released, so nothing recompiles next time.
+      expect(listeners(f.geometry)).toBe(initialGeometryListeners + 1)
+      expect(disposed).toBe(0)
     }
+    expect(materials).toHaveLength(1)
     f.outline.secondaryObjects.push(f.root)
     f.tick()
     const replacement = new BoxGeometry()
@@ -357,7 +358,9 @@ describe('merged outline proxy bookkeeping', () => {
       f.root.add(object)
       f.renderer.renders.length = 0
       f.tick()
-      expect(f.internals._proxiesB.size).toBe(0)
+      expect([...f.internals._proxiesB.values()].some((proxy: Object3D) => proxy.visible)).toBe(
+        false,
+      )
       expect(f.renderer.renders.filter((root) => root === f.scene)).toHaveLength(2)
       f.root.remove(object)
     }
@@ -413,14 +416,14 @@ describe('merged outline passes', () => {
     f.dispose()
   })
 
-  test('clears and prunes has-to-empty groups once, then never touches the renderer', () => {
+  test('clears has-to-empty groups once and parks their proxies, then never touches the renderer', () => {
     const f = makeOutlineFixture()
     f.outline.primaryObjects.push(f.mesh)
     f.tick()
     f.outline.secondaryObjects.length = 0
     f.tick()
     expect(f.renderer.clears).toEqual([f.internals._groupB.composite])
-    expect(f.internals._proxiesB.size).toBe(0)
+    expect(f.internals._proxiesB.get(f.mesh).visible).toBe(false)
     f.outline.primaryObjects.length = 0
     f.renderer.renders.length = 0
     f.tick()
@@ -428,7 +431,7 @@ describe('merged outline passes', () => {
       f.internals._groupB.composite,
       f.internals._groupA.composite,
     ])
-    expect(f.internals._proxiesA.size).toBe(0)
+    expect(f.internals._proxiesA.get(f.mesh).visible).toBe(false)
     expect(f.renderer.renders).toHaveLength(0)
     expect(() =>
       f.outline.updateBefore({
@@ -457,4 +460,78 @@ test('selection masks retain cutout coverage and release it when alpha testing i
   expect(f.renderer.draws[0].material.alphaTest).toBe(0)
   map.dispose()
   f.dispose()
+})
+
+describe('merged outline mask reuse', () => {
+  test('selecting the same object again draws it with the same mask material', () => {
+    const f = makeOutlineFixture()
+    f.outline.secondaryObjects.length = 0
+    const masks = new Set()
+    for (let i = 0; i < 4; i++) {
+      f.outline.secondaryObjects.push(f.root)
+      f.renderer.draws.length = 0
+      f.tick()
+      for (const draw of f.renderer.draws) masks.add(draw.material)
+      f.outline.secondaryObjects.length = 0
+      f.tick()
+    }
+    expect(masks.size).toBe(1)
+    f.dispose()
+  })
+
+  test('a parked proxy goes once its source leaves the scene', () => {
+    const f = makeOutlineFixture()
+    const other = new Mesh(f.geometry, f.material)
+    f.scene.add(other)
+    f.tick()
+    f.outline.secondaryObjects.length = 0
+    f.tick()
+    expect(f.internals._proxiesB.has(f.mesh)).toBe(true)
+    f.root.remove(f.mesh)
+    f.outline.secondaryObjects.push(other)
+    f.tick()
+    expect(f.internals._proxiesB.has(f.mesh)).toBe(false)
+    expect(f.internals._maskSceneB.children).toEqual([f.internals._proxiesB.get(other)])
+    f.dispose()
+  })
+
+  test('keeps the most recently outlined proxies when there are too many to park', () => {
+    const f = makeOutlineFixture()
+    f.outline.secondaryObjects.length = 0
+    const meshes = Array.from({ length: 70 }, () => new Mesh(f.geometry, f.material))
+    for (const mesh of meshes) {
+      f.scene.add(mesh)
+      f.outline.secondaryObjects.push(mesh)
+      f.tick()
+      f.outline.secondaryObjects.length = 0
+    }
+    f.outline.secondaryObjects.push(f.mesh)
+    f.tick()
+    expect(f.internals._proxiesB.size).toBe(65)
+    expect(f.internals._proxiesB.has(meshes[0])).toBe(false)
+    expect(f.internals._proxiesB.has(meshes[69])).toBe(true)
+    f.dispose()
+  })
+
+  test('a cutout mask outlives its selection and goes with its source material', () => {
+    const f = makeOutlineFixture()
+    const map = new Texture()
+    f.material.map = map
+    f.material.alphaTest = 0.5
+    f.tick()
+    const mask = f.internals._cutoutMasksB.get(f.material)
+    expect(mask).toBeDefined()
+    let maskDisposed = 0
+    mask.addEventListener('dispose', () => maskDisposed++)
+    f.outline.secondaryObjects.length = 0
+    f.tick()
+    f.tick()
+    expect(f.internals._cutoutMasksB.get(f.material)).toBe(mask)
+    expect(maskDisposed).toBe(0)
+    f.material.dispose()
+    expect(maskDisposed).toBe(1)
+    expect(f.internals._cutoutMasksB.has(f.material)).toBe(false)
+    map.dispose()
+    f.dispose()
+  })
 })

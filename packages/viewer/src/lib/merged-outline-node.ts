@@ -61,6 +61,15 @@ import { hasDrawableGeometry } from './drawable-geometry'
 import { BATCHED_LAYER, SCENE_LAYER } from './layers'
 import { isSetAsideForRender } from './scene-matrices'
 
+/** Outline proxies kept, hidden, after their selection ends (see `_syncProxies`). */
+const MAX_PARKED_PROXIES = 64
+
+function isAttachedTo(object: Object3D, root: Object3D): boolean {
+  for (let ancestor: Object3D | null = object; ancestor; ancestor = ancestor.parent)
+    if (ancestor === root) return true
+  return false
+}
+
 const _quadMesh = new QuadMesh()
 const _size = new Vector2()
 const _BLUR_X = new Vector2(1.0, 0.0)
@@ -184,8 +193,6 @@ export class MergedOutlineNode extends TempNode {
   private readonly _proxyMaskMaterials = new WeakMap<Mesh | Sprite, NodeMaterial>()
   private readonly _cutoutMasksA = new Map<any, NodeMaterial>()
   private readonly _cutoutMasksB = new Map<any, NodeMaterial>()
-  private readonly _usedCutoutMasksA = new Set<any>()
-  private readonly _usedCutoutMasksB = new Set<any>()
   private readonly _maskSceneA = new Scene()
   private readonly _maskSceneB = new Scene()
 
@@ -376,21 +383,7 @@ export class MergedOutlineNode extends TempNode {
     this._buildCache(this.secondaryObjects, this._cacheB)
     const useProxiesA = this._syncProxies(this._cacheA, this._proxiesA, this._maskSceneA)
     const useProxiesB = this._syncProxies(this._cacheB, this._proxiesB, this._maskSceneB)
-    this._usedCutoutMasksA.clear()
-    this._usedCutoutMasksB.clear()
-    for (const [cache, used] of [
-      [this._cacheA, this._usedCutoutMasksA],
-      [this._cacheB, this._usedCutoutMasksB],
-    ] as const) {
-      for (const object of cache) {
-        if (!(object instanceof Mesh)) continue
-        const materials = Array.isArray(object.material) ? object.material : [object.material]
-        for (const source of materials) if (source?.alphaTest > 0) used.add(source)
-      }
-    }
-
     if (!hasAny) {
-      this._pruneCutoutMasks()
       RendererUtils.restoreRendererAndSceneState(renderer, scene, _rendererState)
       return
     }
@@ -427,7 +420,6 @@ export class MergedOutlineNode extends TempNode {
     if (hasPrimary) this._runEdgePipeline(renderer, 'A')
     if (hasSecondary) this._runEdgePipeline(renderer, 'B')
 
-    this._pruneCutoutMasks()
     RendererUtils.restoreRendererAndSceneState(renderer, scene, _rendererState)
   }
 
@@ -439,7 +431,6 @@ export class MergedOutlineNode extends TempNode {
     const material = isA ? this._prepareMaskMatA : this._prepareMaskMatB
     const spriteMaterial = isA ? this._prepareMaskSpriteMatA : this._prepareMaskSpriteMatB
     const cutoutMasks = isA ? this._cutoutMasksA : this._cutoutMasksB
-    const usedCutoutMasks = isA ? this._usedCutoutMasksA : this._usedCutoutMasksB
     if (useProxies) {
       for (const [source, proxy] of proxies) proxy.matrixWorld.copy(source.matrixWorld)
     }
@@ -471,8 +462,7 @@ export class MergedOutlineNode extends TempNode {
                 : null)
             if (opacityNode) {
               if (!cutoutMask) {
-                cutoutMask = material.clone()
-                cutoutMasks.set(sourceMaterial, cutoutMask)
+                cutoutMask = this._createCutoutMask(material, sourceMaterial, cutoutMasks)
               }
               const positionNode = sourceMaterial.positionNode ?? null
               const changed =
@@ -486,7 +476,6 @@ export class MergedOutlineNode extends TempNode {
               cutoutMask.userData.sourceMap = sourceMaterial.map
               if (changed) cutoutMask.needsUpdate = true
               maskMaterial = cutoutMask
-              usedCutoutMasks.add(sourceMaterial)
             }
           }
           if (useProxies) {
@@ -522,12 +511,28 @@ export class MergedOutlineNode extends TempNode {
 
   private _syncProxies(cache: Set<Object3D>, proxies: Map<Object3D, Mesh | Sprite>, scene: Scene) {
     const supported = this._supportsProxies(cache)
-    for (const [source, proxy] of proxies) {
-      if (!supported || !cache.has(source) || !hasDrawableGeometry(source.geometry)) {
-        this._disposeProxyMaterial(proxy)
-        scene.remove(proxy)
-        proxies.delete(source)
-      }
+    // A proxy outlives its selection, hidden, while its source is still in the scene: disposing
+    // its mask material would release the compiled mask pipeline, and every later selection
+    // would compile it again. It goes when its source leaves the scene or changes geometry.
+    const outlined: [Object3D, Mesh | Sprite][] = []
+    const parked: Object3D[] = []
+    for (const [source, proxy] of [...proxies]) {
+      const current =
+        hasDrawableGeometry(source.geometry) &&
+        proxy.geometry === source.geometry &&
+        isAttachedTo(source, this.scene)
+      if (current && supported && cache.has(source)) outlined.push([source, proxy])
+      else if (current) {
+        proxy.visible = false
+        parked.push(source)
+      } else this._dropProxy(source, proxies, scene)
+    }
+    for (const source of parked.slice(0, Math.max(0, parked.length - MAX_PARKED_PROXIES)))
+      this._dropProxy(source, proxies, scene)
+    // Most recently outlined last, so the oldest parked proxies go first.
+    for (const [source, proxy] of outlined) {
+      proxies.delete(source)
+      proxies.set(source, proxy)
     }
     if (!supported) return false
 
@@ -543,9 +548,6 @@ export class MergedOutlineNode extends TempNode {
         proxy.frustumCulled = false
         proxies.set(source, proxy)
         scene.add(proxy)
-      } else if (proxy.geometry !== source.geometry) {
-        // Three's RenderObject.setGeometry does not move its dispose listener.
-        this._disposeProxyMaterial(proxy)
       }
       let visible = true
       let attached = false
@@ -593,22 +595,39 @@ export class MergedOutlineNode extends TempNode {
     return true
   }
 
+  private _dropProxy(source: Object3D, proxies: Map<Object3D, Mesh | Sprite>, scene: Scene) {
+    const proxy = proxies.get(source)
+    if (!proxy) return
+    this._disposeProxyMaterial(proxy)
+    scene.remove(proxy)
+    proxies.delete(source)
+  }
+
   private _disposeProxyMaterial(proxy: Mesh | Sprite) {
     this._proxyMaskMaterials.get(proxy)?.dispose()
     this._proxyMaskMaterials.delete(proxy)
   }
 
-  private _pruneCutoutMasks() {
-    for (const [materials, used] of [
-      [this._cutoutMasksA, this._usedCutoutMasksA],
-      [this._cutoutMasksB, this._usedCutoutMasksB],
-    ] as const) {
-      for (const [source, mask] of materials) {
-        if (used.has(source)) continue
-        mask.dispose()
-        materials.delete(source)
-      }
+  /**
+   * The cutout mask for one alpha-tested source material. It lives as long as that material, not
+   * as long as a selection: disposing it would release its compiled pipeline, and selecting the
+   * same kind of object again would compile it anew.
+   */
+  private _createCutoutMask(
+    material: NodeMaterial,
+    sourceMaterial: any,
+    cutoutMasks: Map<any, NodeMaterial>,
+  ): NodeMaterial {
+    const cutoutMask = material.clone()
+    const release = () => {
+      sourceMaterial.removeEventListener('dispose', release)
+      cutoutMask.dispose()
+      cutoutMasks.delete(sourceMaterial)
     }
+    cutoutMask.userData.release = release
+    sourceMaterial.addEventListener('dispose', release)
+    cutoutMasks.set(sourceMaterial, cutoutMask)
+    return cutoutMask
   }
 
   private _runEdgePipeline(renderer: any, group: 'A' | 'B') {
@@ -845,10 +864,8 @@ export class MergedOutlineNode extends TempNode {
     this._proxiesB.clear()
     this._cacheA.clear()
     this._cacheB.clear()
-    for (const mask of this._cutoutMasksA.values()) mask.dispose()
-    for (const mask of this._cutoutMasksB.values()) mask.dispose()
-    this._cutoutMasksA.clear()
-    this._cutoutMasksB.clear()
+    for (const mask of [...this._cutoutMasksA.values(), ...this._cutoutMasksB.values()])
+      mask.userData.release()
     this._depthRT.dispose()
     this._groupA.dispose()
     this._groupB.dispose()
