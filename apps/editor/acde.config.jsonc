@@ -1,5 +1,6 @@
 // Build and run through `bun run acde:build` / `acde:dev` / `acde:test` / `acde:install`, not bare
 // `acde …`: they set PASCAL_PORTABLE_BUILD=1, without which images stay optimized in the bundle.
+// acde:test runs one worker: each worker runs `next build`, and they would share `.next`.
 {
   "$schema": "../../node_modules/@dopame/acde-api/config.schema.json",
   "type": "app",
