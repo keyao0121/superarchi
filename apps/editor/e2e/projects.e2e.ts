@@ -180,28 +180,25 @@ test('renames and deletes projects from the editor and the list', {
   expect((await api(window, `/api/scenes/${scene.id}`)).status).toBe(404)
 })
 
-// Known issue T26: opening a project under acde throws `Worker is not defined`.
-// The second expectation pins it so this test fails once T26 lands; then drop it
-// and keep only the first. Any other uncaught error fails the test today.
-test('project page raises no uncaught errors (known issue T26)', {
+// Uncaught exceptions only: `console.error` calls do not fail it. The demo build
+// brings items, walls and roofs, so the page has models and materials to load.
+// Where WebGPU is missing (macOS) the viewer must show its platform notice.
+test('project page raises no uncaught errors', {
   timeout: TEST_TIMEOUT_MS,
 }, async ({ app }) => {
   const window = app!
   await expectHome(window)
-  const scene = await createSceneViaApi(window, 'Page errors')
+  const graph = await Bun.file(DEMO_BUILD).json()
+  const scene = await createSceneViaApi(window, 'Page errors', graph)
+  expect(scene.nodeCount).toBeGreaterThan(0)
   await goto(window, `/project/${scene.id}`)
   await waitForEditorReady(window)
 
-  const known = (text: string) => text.includes('Worker is not defined')
-  await expect
-    .poll(async () => (await pageErrors(window)).some((entry) => known(entry.text)), {
-      timeout: 20_000,
-      message: 'T26 seems fixed: remove the known-issue expectation from this test',
-    })
-    .toBe(true)
+  if (await window.evaluate<boolean>('typeof navigator.gpu === "undefined"')) {
+    await expect(window.locator('[data-viewer-unsupported="platform"]')).toBeVisible()
+  }
 
-  const unexpected = (await pageErrors(window))
-    .filter((entry) => !known(entry.text))
-    .map((entry) => entry.text)
-  expect(unexpected).toEqual([])
+  // Give late loads (models, textures, workers) time to fail.
+  await window.evaluate('new Promise((resolve) => setTimeout(() => resolve(true), 5000))')
+  expect((await pageErrors(window)).map((entry) => entry.text)).toEqual([])
 })

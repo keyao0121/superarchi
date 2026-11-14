@@ -43,10 +43,14 @@ export interface SceneMeta {
   nodeCount: number
 }
 
-export async function createSceneViaApi(app: AppWindow, name: string): Promise<SceneMeta> {
+export async function createSceneViaApi(
+  app: AppWindow,
+  name: string,
+  graph: unknown = { nodes: {}, rootNodeIds: [] },
+): Promise<SceneMeta> {
   const created = await api<SceneMeta>(app, '/api/scenes', {
     method: 'POST',
-    body: { name, graph: { nodes: {}, rootNodeIds: [] } },
+    body: { name, graph },
   })
   expect(created.status).toBe(201)
   return created.json as SceneMeta
