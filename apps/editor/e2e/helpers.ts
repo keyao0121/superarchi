@@ -1,4 +1,6 @@
-import { type AppWindow, type ConsoleEntry, expect } from 'acde/test'
+import { existsSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { type Acde, type AppWindow, type ConsoleEntry, expect } from 'acde/test'
 
 /**
  * Session start plus a cold `next build` into `.acde/test` measured ~30 s on an
@@ -98,4 +100,50 @@ export async function pageErrors(app: AppWindow): Promise<ConsoleEntry[]> {
     if (page.entries.length < 1000 || page.next === since) return found
     since = page.next
   }
+}
+
+export interface SceneGraphJson {
+  nodes: Record<string, unknown>
+  rootNodeIds: string[]
+}
+
+export async function sceneGraphViaApi(app: AppWindow, id: string): Promise<SceneGraphJson> {
+  const scene = await api<{ graph: SceneGraphJson }>(app, `/api/scenes/${id}`)
+  expect(scene.status).toBe(200)
+  return (scene.json as { graph: SceneGraphJson }).graph
+}
+
+/** The same scene: node ids and roots, regardless of key order. */
+export function graphShape(graph: SceneGraphJson): { nodeIds: string[]; rootNodeIds: string[] } {
+  return { nodeIds: Object.keys(graph.nodes).sort(), rootNodeIds: [...graph.rootNodeIds] }
+}
+
+/** Opens the editor's Settings tab, where Save build and Load build live. */
+export async function openSettingsTab(app: AppWindow): Promise<void> {
+  await app.getByRole('button', { name: 'Settings', exact: true }).click()
+  await expect(app.getByRole('button', { name: 'Load build' })).toBeVisible()
+}
+
+/**
+ * Loads a build file into the open project through the picker and waits for
+ * the autosave that writes it to the server.
+ */
+export async function loadBuild(acde: Acde, app: AppWindow, sceneId: string, file: string) {
+  await acde.chooseFiles([file])
+  await app.getByRole('button', { name: 'Load build' }).click()
+  const save = app.waitForRequest(`/api/scenes/${sceneId}`, { method: 'PUT' })
+  await app.getByRole('button', { name: 'Replace current scene' }).click()
+  expect((await save).status).toBe(200)
+}
+
+/** Files the runtime saved for `<a download>`: they land in `$HOME/Downloads`. */
+export function downloadsDir(home: string): string {
+  return join(home, 'Downloads')
+}
+
+export async function waitForDownload(home: string, pattern: RegExp): Promise<string> {
+  const dir = downloadsDir(home)
+  const find = () => (existsSync(dir) ? readdirSync(dir).filter((name) => pattern.test(name)) : [])
+  await expect.poll(() => find().length, { timeout: 15_000 }).toBe(1)
+  return join(dir, find()[0] as string)
 }
