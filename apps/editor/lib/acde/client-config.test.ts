@@ -1,5 +1,11 @@
 import { expect, test } from 'bun:test'
-import { ACDE_ASSETS_BASE_URL, acdeViewerConfig, shouldLoadWebXR } from './client-config'
+import {
+  ACDE_ASSETS_BASE_URL,
+  ACDE_MANIFOLD_RUNTIME,
+  acdeViewerConfig,
+  configureAcdeManifold,
+  shouldLoadWebXR,
+} from './client-config'
 
 test('outside acde the viewer config is left as the host sets it', () => {
   expect(acdeViewerConfig(false)).toEqual({})
@@ -16,4 +22,18 @@ test('WebXR loads everywhere but acde', () => {
   expect(shouldLoadWebXR(false)).toBe(true)
   expect(shouldLoadWebXR(true)).toBe(false)
   expect(shouldLoadWebXR()).toBe(true)
+})
+
+test('the Manifold runtime is redirected to the bundled copy only under acde', () => {
+  const calls: unknown[] = []
+  const configure = (options: unknown) => calls.push(options)
+
+  configureAcdeManifold(configure, false)
+  configureAcdeManifold(configure)
+  expect(calls).toEqual([])
+
+  configureAcdeManifold(configure, true)
+  expect(calls).toEqual([ACDE_MANIFOLD_RUNTIME])
+  expect(ACDE_MANIFOLD_RUNTIME.moduleUrl).toBe('/acde-assets/vendor/manifold/manifold.js')
+  expect(ACDE_MANIFOLD_RUNTIME.wasmUrl).toBe('/acde-assets/vendor/manifold/manifold.wasm')
 })

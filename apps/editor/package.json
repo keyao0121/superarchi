@@ -11,10 +11,11 @@
     "lint": "biome lint",
     "check-types": "next typegen && tsc --noEmit",
     "test": "bun test lib",
-    "acde:build": "PASCAL_PORTABLE_BUILD=1 acde build",
-    "acde:dev": "PASCAL_PORTABLE_BUILD=1 acde dev",
-    "acde:test": "PASCAL_PORTABLE_BUILD=1 acde test",
-    "acde:install": "PASCAL_PORTABLE_BUILD=1 acde install"
+    "acde:prepare": "bun scripts/acde/prepare.ts",
+    "acde:build": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde build",
+    "acde:dev": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde dev",
+    "acde:test": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde test",
+    "acde:install": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde install"
   },
   "dependencies": {
     "@iconify/react": "^6.0.4",

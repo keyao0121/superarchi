@@ -8,7 +8,7 @@ import {
   registerNode,
 } from '@pascal-app/core'
 import { sdfChecksFromEnv, setSdfChecks } from '@pascal-app/core/usage-field'
-import { registerEditorHostPanel } from '@pascal-app/editor'
+import { configureManifoldRuntime, registerEditorHostPanel } from '@pascal-app/editor'
 import { builtinPlugin } from '@pascal-app/nodes'
 import { bonesHostPanel, bonesPlugin } from '@pascal-app/plugin-bones'
 import {
@@ -19,7 +19,7 @@ import {
 import { treesHostPanel, treesPlugin } from '@pascal-app/plugin-trees'
 import { configureViewer, registerViewerPresentation } from '@pascal-app/viewer'
 import { webXRHostPanel, webXRPlugin } from '@webxr/plugin'
-import { acdeViewerConfig, shouldLoadWebXR } from './acde/client-config'
+import { acdeViewerConfig, configureAcdeManifold, shouldLoadWebXR } from './acde/client-config'
 
 configureViewer({
   sfxBaseUrl: '/audios/sfx',
@@ -28,6 +28,7 @@ configureViewer({
   storageUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   ...acdeViewerConfig(),
 })
+configureAcdeManifold(configureManifoldRuntime)
 
 // Usage checks (passages, turning circles, flow widths) are off unless the build says so; Next
 // inlines the NEXT_PUBLIC_ mirror of the server's PASCAL_SDF_CHECKS.
