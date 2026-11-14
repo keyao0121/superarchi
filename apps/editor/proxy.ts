@@ -55,8 +55,9 @@ export const config = {
   // Everything except Next's own assets and the files served from `public/`
   // and `app/favicon.ico`, listed by location. Exclude assets by where they
   // live, never by a file extension, since dynamic route segments accept dots.
-  // Keep this in sync with the folders in `public/`.
+  // Keep this in sync with the folders in `public/`, including `acde-assets/`,
+  // which `scripts/acde/prepare.ts` writes there for acde builds (gitignored).
   matcher: [
-    '/((?!_next/|favicon\\.ico$|(?:audios|demos|fonts|hdri|icons|items|material)/|[^/]+\\.svg$).*)',
+    '/((?!_next/|favicon\\.ico$|(?:acde-assets|audios|demos|fonts|hdri|icons|items|material)/|[^/]+\\.svg$).*)',
   ],
 }

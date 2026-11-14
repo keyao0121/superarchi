@@ -104,6 +104,8 @@ test('Next and public/ static assets skip the proxy', () => {
     '/icons/column.webp',
     '/items/round-carpet/model.glb',
     '/material/concrete/prepared_drywall/prepared_drywall_normal_512.ktx2',
+    '/acde-assets/material/concrete/prepared_drywall/prepared_drywall_normal_512.webp',
+    '/acde-assets/items/sofa/model.glb',
   ]) {
     expect([path, unstable_doesMiddlewareMatch({ config, url: path })]).toEqual([path, false])
   }
