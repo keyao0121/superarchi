@@ -1,5 +1,6 @@
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { type Acde, type AppWindow, type ConsoleEntry, expect } from 'acde/test'
 
 /**
@@ -8,7 +9,7 @@ import { type Acde, type AppWindow, type ConsoleEntry, expect } from 'acde/test'
  */
 export const TEST_TIMEOUT_MS = 180_000
 
-export const DEMO_BUILD = new URL('../public/demos/demo_1.json', import.meta.url).pathname
+export const DEMO_BUILD = fileURLToPath(new URL('../public/demos/demo_1.json', import.meta.url))
 
 export interface ApiResult<T = unknown> {
   status: number
@@ -120,8 +121,10 @@ export function graphShape(graph: SceneGraphJson): { nodeIds: string[]; rootNode
 
 /** Opens the editor's Settings tab, where Save build and Load build live. */
 export async function openSettingsTab(app: AppWindow): Promise<void> {
+  const loadBuild = app.getByRole('button', { name: 'Load build' })
+  if (await loadBuild.isVisible()) return
   await app.getByRole('button', { name: 'Settings', exact: true }).click()
-  await expect(app.getByRole('button', { name: 'Load build' })).toBeVisible()
+  await expect(loadBuild).toBeVisible()
 }
 
 /**
@@ -146,4 +149,27 @@ export async function waitForDownload(home: string, pattern: RegExp): Promise<st
   const find = () => (existsSync(dir) ? readdirSync(dir).filter((name) => pattern.test(name)) : [])
   await expect.poll(() => find().length, { timeout: 15_000 }).toBe(1)
   return join(dir, find()[0] as string)
+}
+
+/** What Save build names its file: `layout_<UTC date>.json`. */
+export const BUILD_FILE = /^layout_\d{4}-\d{2}-\d{2}\.json$/
+
+/**
+ * The graph the editor holds in memory, read back through Save build, which
+ * serializes the editor's scene store rather than the server copy. Clears
+ * earlier exports first so the wait sees only this one, and removes it after.
+ */
+export async function editorGraphViaExport(app: AppWindow, home: string): Promise<SceneGraphJson> {
+  const dir = downloadsDir(home)
+  if (existsSync(dir)) {
+    for (const name of readdirSync(dir)) {
+      if (BUILD_FILE.test(name)) rmSync(join(dir, name))
+    }
+  }
+  await openSettingsTab(app)
+  await app.getByRole('button', { name: 'Save build' }).click()
+  const file = await waitForDownload(home, BUILD_FILE)
+  const graph = (await Bun.file(file).json()) as SceneGraphJson
+  rmSync(file)
+  return graph
 }

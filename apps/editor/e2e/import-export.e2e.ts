@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { expect, test } from 'acde/test'
 import {
   api,
+  BUILD_FILE,
   createSceneViaApi,
   DEMO_BUILD,
   downloadsDir,
@@ -19,8 +20,6 @@ import {
   waitForDownload,
   waitForEditorReady,
 } from './helpers'
-
-const BUILD_FILE = /^layout_\d{4}-\d{2}-\d{2}\.json$/
 
 /** The user's real Downloads, which a test must never write to. */
 function realDownloads(): Record<string, number> {
