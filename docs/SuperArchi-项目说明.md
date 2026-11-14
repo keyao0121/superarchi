@@ -420,7 +420,7 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 
 | 交付物 | 位置 | 状态 |
 | --- | --- | --- |
-| 代码仓库（fork 自上游，保留提交历史） | <https://github.com/chenqihao91/editor> | 🔧 我们的改动在本地 `acde` 分支，尚未推送到该仓库 |
+| 代码仓库（fork 自上游，保留提交历史） | <https://github.com/chenqihao91/editor> | ✅ 我们的改动在 `acde` 分支，接在上游的完整历史之后 |
 | Dopame OS 打包产物（纯 JS 包） | `acde build` 生成；已打包为 `super-archi-dopame-package.tar.gz`（不随代码提交） | ✅ 已能生成，并安装到 Dopame 运行 |
 | 路演 PPT | 待补充 | 🔧 |
 | 项目说明（含移植说明） | 本文件 | ✅ |
@@ -429,7 +429,7 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 
 ### 资料目录
 
-代码仓库（`main` 分支是上游代码的快照，`acde` 分支是我们的改动）：
+代码仓库（`main` 分支与上游一致，`acde` 分支是我们的改动）：
 
 ```
 pascal-editor/
