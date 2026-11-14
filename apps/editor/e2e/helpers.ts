@@ -1,4 +1,8 @@
-import { type AppWindow, type ConsoleEntry, expect } from 'acde/test'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { type Acde, type AppWindow, type ConsoleEntry, expect } from 'acde/test'
+import type { SceneGraphJson } from './graph-content'
 
 /**
  * Session start plus a cold `next build` into `.acde/test` measured ~30 s on an
@@ -6,7 +10,7 @@ import { type AppWindow, type ConsoleEntry, expect } from 'acde/test'
  */
 export const TEST_TIMEOUT_MS = 180_000
 
-export const DEMO_BUILD = new URL('../public/demos/demo_1.json', import.meta.url).pathname
+export const DEMO_BUILD = fileURLToPath(new URL('../public/demos/demo_1.json', import.meta.url))
 
 export interface ApiResult<T = unknown> {
   status: number
@@ -98,4 +102,72 @@ export async function pageErrors(app: AppWindow): Promise<ConsoleEntry[]> {
     if (page.entries.length < 1000 || page.next === since) return found
     since = page.next
   }
+}
+
+export { graphContentDiff, type SceneGraphJson } from './graph-content'
+
+export async function sceneGraphViaApi(app: AppWindow, id: string): Promise<SceneGraphJson> {
+  const scene = await api<{ graph: SceneGraphJson }>(app, `/api/scenes/${id}`)
+  expect(scene.status).toBe(200)
+  return (scene.json as { graph: SceneGraphJson }).graph
+}
+
+/** The same scene: node ids and roots, regardless of key order. */
+export function graphShape(graph: SceneGraphJson): { nodeIds: string[]; rootNodeIds: string[] } {
+  return { nodeIds: Object.keys(graph.nodes).sort(), rootNodeIds: [...graph.rootNodeIds] }
+}
+
+/** Opens the editor's Settings tab, where Save build and Load build live. */
+export async function openSettingsTab(app: AppWindow): Promise<void> {
+  const loadBuild = app.getByRole('button', { name: 'Load build' })
+  if (await loadBuild.isVisible()) return
+  await app.getByRole('button', { name: 'Settings', exact: true }).click()
+  await expect(loadBuild).toBeVisible()
+}
+
+/**
+ * Loads a build file into the open project through the picker and waits for
+ * the autosave that writes it to the server.
+ */
+export async function loadBuild(acde: Acde, app: AppWindow, sceneId: string, file: string) {
+  await acde.chooseFiles([file])
+  await app.getByRole('button', { name: 'Load build' }).click()
+  const save = app.waitForRequest(`/api/scenes/${sceneId}`, { method: 'PUT' })
+  await app.getByRole('button', { name: 'Replace current scene' }).click()
+  expect((await save).status).toBe(200)
+}
+
+/** Files the runtime saved for `<a download>`: they land in `$HOME/Downloads`. */
+export function downloadsDir(home: string): string {
+  return join(home, 'Downloads')
+}
+
+export async function waitForDownload(home: string, pattern: RegExp): Promise<string> {
+  const dir = downloadsDir(home)
+  const find = () => (existsSync(dir) ? readdirSync(dir).filter((name) => pattern.test(name)) : [])
+  await expect.poll(() => find().length, { timeout: 15_000 }).toBe(1)
+  return join(dir, find()[0] as string)
+}
+
+/** What Save build names its file: `layout_<UTC date>.json`. */
+export const BUILD_FILE = /^layout_\d{4}-\d{2}-\d{2}\.json$/
+
+/**
+ * The graph the editor holds in memory, read back through Save build, which
+ * serializes the editor's scene store rather than the server copy. Clears
+ * earlier exports first so the wait sees only this one, and removes it after.
+ */
+export async function editorGraphViaExport(app: AppWindow, home: string): Promise<SceneGraphJson> {
+  const dir = downloadsDir(home)
+  if (existsSync(dir)) {
+    for (const name of readdirSync(dir)) {
+      if (BUILD_FILE.test(name)) rmSync(join(dir, name))
+    }
+  }
+  await openSettingsTab(app)
+  await app.getByRole('button', { name: 'Save build' }).click()
+  const file = await waitForDownload(home, BUILD_FILE)
+  const graph = (await Bun.file(file).json()) as SceneGraphJson
+  rmSync(file)
+  return graph
 }

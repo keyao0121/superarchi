@@ -3,10 +3,13 @@ import {
   api,
   createSceneViaApi,
   DEMO_BUILD,
+  editorGraphViaExport,
   expectHome,
   goto,
+  graphContentDiff,
   pageErrors,
   type SceneMeta,
+  sceneGraphViaApi,
   sceneIdFromPath,
   TEST_TIMEOUT_MS,
   waitForEditorReady,
@@ -83,7 +86,7 @@ test('opens on the project list, serves the settings page and round-trips the sc
 
 test('creates a project, saves an imported scene and reopens it', {
   timeout: TEST_TIMEOUT_MS,
-}, async ({ app, acde }) => {
+}, async ({ app, acde, home }) => {
   const window = app!
   await expectHome(window)
 
@@ -110,6 +113,11 @@ test('creates a project, saves an imported scene and reopens it', {
   expect(saved.json?.version).toBeGreaterThan(1)
   const nodeCount = saved.json?.nodeCount ?? 0
   expect(nodeCount).toBeGreaterThan(0)
+  const savedGraph = await sceneGraphViaApi(window, sceneId)
+  expect(Object.keys(savedGraph.nodes)).toHaveLength(nodeCount)
+
+  // The editor holds what was saved, read back from its own store.
+  expect(graphContentDiff(savedGraph, await editorGraphViaExport(window, home))).toEqual([])
 
   // Reopen with a full page load, which reads the scene back from the server.
   // Not `window.reload()`: this page was reached with a client-side push, and
@@ -122,6 +130,9 @@ test('creates a project, saves an imported scene and reopens it', {
   const reopened = await api<SceneMeta>(window, `/api/scenes/${sceneId}`)
   expect(reopened.json?.nodeCount).toBe(nodeCount)
   expect(reopened.json?.version).toBe(saved.json?.version)
+  // Ready and the title come from load state and metadata; the scene itself
+  // must be back in the editor, not just still on the server.
+  expect(graphContentDiff(savedGraph, await editorGraphViaExport(window, home))).toEqual([])
 
   // And from the list, which shows what was saved.
   await window.getByRole('link', { name: 'All projects' }).click()
