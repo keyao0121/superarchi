@@ -2,6 +2,7 @@ import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { type Acde, type AppWindow, type ConsoleEntry, expect } from 'acde/test'
+import type { SceneGraphJson } from './graph-content'
 
 /**
  * Session start plus a cold `next build` into `.acde/test` measured ~30 s on an
@@ -103,10 +104,7 @@ export async function pageErrors(app: AppWindow): Promise<ConsoleEntry[]> {
   }
 }
 
-export interface SceneGraphJson {
-  nodes: Record<string, unknown>
-  rootNodeIds: string[]
-}
+export { graphContentDiff, type SceneGraphJson } from './graph-content'
 
 export async function sceneGraphViaApi(app: AppWindow, id: string): Promise<SceneGraphJson> {
   const scene = await api<{ graph: SceneGraphJson }>(app, `/api/scenes/${id}`)

@@ -10,6 +10,7 @@ import {
   downloadsDir,
   expectHome,
   goto,
+  graphContentDiff,
   graphShape,
   loadBuild,
   openSettingsTab,
@@ -24,15 +25,19 @@ import {
 /** The user's real Downloads, which a test must never write to. */
 function realDownloads(): Record<string, number> {
   const dir = join(homedir(), 'Downloads')
+  let names: string[]
   try {
-    return Object.fromEntries(
-      readdirSync(dir)
-        .filter((name) => name.startsWith('layout_'))
-        .map((name) => [name, statSync(join(dir, name)).mtimeMs]),
-    )
-  } catch {
-    return {}
+    names = readdirSync(dir)
+  } catch (error) {
+    // No Downloads folder at all is an empty one; anything else must fail.
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {}
+    throw error
   }
+  return Object.fromEntries(
+    names
+      .filter((name) => name.startsWith('layout_'))
+      .map((name) => [name, statSync(join(dir, name)).mtimeMs]),
+  )
 }
 
 test('exports a build to the session Downloads and loads it into a new project', {
@@ -48,8 +53,8 @@ test('exports a build to the session Downloads and loads it into a new project',
   await waitForEditorReady(window)
   await openSettingsTab(window)
   await loadBuild(acde, window, source.id, DEMO_BUILD)
-  const saved = graphShape(await sceneGraphViaApi(window, source.id))
-  expect(saved.nodeIds.length).toBeGreaterThan(0)
+  const saved = await sceneGraphViaApi(window, source.id)
+  expect(graphShape(saved).nodeIds.length).toBeGreaterThan(0)
 
   // Export: `<a download>` lands in this session's HOME, not the user's.
   await window.getByRole('button', { name: 'Save build' }).click()
@@ -63,7 +68,8 @@ test('exports a build to the session Downloads and loads it into a new project',
   expect(Object.keys(exported).sort()).toEqual(
     ['collections', 'installedPlugins', 'materials', 'nodes', 'projectId', 'rootNodeIds'].sort(),
   )
-  expect(graphShape(exported)).toEqual(saved)
+  // Whole node contents, not just ids: geometry, parents, materials and all.
+  expect(graphContentDiff(saved, exported)).toEqual([])
 
   // Round trip: load the exported file into a fresh project.
   await goto(window, '/')
@@ -73,7 +79,7 @@ test('exports a build to the session Downloads and loads it into a new project',
   await waitForEditorReady(window)
   await openSettingsTab(window)
   await loadBuild(acde, window, target.id, exportedFile)
-  expect(graphShape(await sceneGraphViaApi(window, target.id))).toEqual(graphShape(exported))
+  expect(graphContentDiff(exported, await sceneGraphViaApi(window, target.id))).toEqual([])
 
   expect(realDownloads()).toEqual(realBefore)
 })
