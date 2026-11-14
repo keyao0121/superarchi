@@ -6,7 +6,7 @@ import ts from 'typescript'
 // Web APIs the acde page runtime does not support (acde docs, "Web compatibility" →
 // "Not yet supported"). Existing uses are recorded in a baseline so that upstream merges
 // cannot introduce new ones unnoticed; a use that only runs outside acde is marked
-// `acde-compat: guarded` on its line or the line above.
+// `acde-compat: guarded` at the end of its line or in a comment line directly above.
 
 export const ruleIds = [
   'worker',
@@ -63,6 +63,27 @@ function endsWithName(node: ts.Expression, name: RegExp) {
   return target !== undefined && name.test(target)
 }
 
+const globalObject = /^(?:window|globalThis|self)$/
+
+// `OffscreenCanvas`, `window.OffscreenCanvas`, `globalThis['OffscreenCanvas']`…, but not
+// `options.OffscreenCanvas` or a property named so in an object literal.
+function isGlobalReference(node: ts.Node, name: string) {
+  if (ts.isIdentifier(node) && node.text === name) {
+    const parent = node.parent
+    const isMemberName =
+      (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+      (ts.isPropertyAssignment(parent) && parent.name === node)
+    return !isMemberName && !isTypePosition(node)
+  }
+  if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))
+    return (
+      memberName(node) === name &&
+      ts.isIdentifier(node.expression) &&
+      globalObject.test(node.expression.text)
+    )
+  return false
+}
+
 function isTypePosition(node: ts.Node) {
   for (let current = node.parent; current; current = current.parent) {
     if (ts.isTypeNode(current) || ts.isHeritageClause(current)) return true
@@ -75,13 +96,7 @@ function ruleFor(node: ts.Node): RuleId | undefined {
   if (ts.isNewExpression(node) && endsWithName(node.expression, /^(?:Shared)?Worker$/))
     return 'worker'
 
-  if (ts.isIdentifier(node) && node.text === 'OffscreenCanvas') {
-    const parent = node.parent
-    const isMemberName =
-      (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
-      (ts.isPropertyAssignment(parent) && parent.name === node)
-    if (!isMemberName && !isTypePosition(node)) return 'offscreen-canvas'
-  }
+  if (isGlobalReference(node, 'OffscreenCanvas')) return 'offscreen-canvas'
 
   if (ts.isCallExpression(node) && endsWithName(node.expression, /^createImageBitmap$/))
     return 'create-image-bitmap'
@@ -115,6 +130,12 @@ function ruleFor(node: ts.Node): RuleId | undefined {
     return 'remote-esm-import'
 }
 
+// A marker at the end of a line of code covers only that line; a comment line of its own
+// covers the line below.
+function isGuardComment(line: string | undefined) {
+  return !!line && /^\s*(?:\/\/|\/\*|\*)/.test(line) && line.includes(guardMarker)
+}
+
 const inlineScript = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
 
 function isStringish(node: ts.Node) {
@@ -143,7 +164,7 @@ function scanText(
     const rule = ruleFor(node)
     if (rule) {
       const line = lineOf(node.getStart(source))
-      const guarded = lines[line]?.includes(guardMarker) || lines[line - 1]?.includes(guardMarker)
+      const guarded = lines[line]?.includes(guardMarker) || isGuardComment(lines[line - 1])
       if (!guarded) findings.push({ file, line: line + 1, rule, text: lines[line]?.trim() ?? '' })
     }
     if (isStringish(node)) {
@@ -172,10 +193,22 @@ export function shouldScan(relativePath: string) {
   return scannedExtensions.has(extname(name)) && !name.endsWith('.d.ts') && !testFile.test(name)
 }
 
+// Builds and tests running on the same tree delete files mid-scan; a path that is gone
+// has nothing left to report.
+function unlessGone<T>(read: () => T): T | undefined {
+  try {
+    return read()
+  } catch (error) {
+    if ((error as { code?: unknown }).code === 'ENOENT') return undefined
+    throw error
+  }
+}
+
 export function collectFiles(root: string, scanRoots = ['apps', 'packages']) {
   const files: string[] = []
   const walk = (directory: string) => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const entries = unlessGone(() => readdirSync(directory, { withFileTypes: true })) ?? []
+    for (const entry of entries) {
       const path = resolve(directory, entry.name)
       if (entry.isDirectory()) {
         if (!skippedDirectories.has(entry.name)) walk(path)
@@ -185,10 +218,7 @@ export function collectFiles(root: string, scanRoots = ['apps', 'packages']) {
       }
     }
   }
-  for (const scanRoot of scanRoots) {
-    const path = resolve(root, scanRoot)
-    if (existsSync(path)) walk(path)
-  }
+  for (const scanRoot of scanRoots) walk(resolve(root, scanRoot))
   return files.sort()
 }
 
@@ -233,10 +263,11 @@ export function compareToBaseline(findings: Finding[], baseline: Baseline): Comp
   return { violations, stale }
 }
 
-export function scanRepository(root: string) {
-  return collectFiles(root).flatMap((file) =>
-    scanSource(file, readFileSync(resolve(root, file), 'utf8')),
-  )
+export function scanRepository(root: string, files = collectFiles(root)) {
+  return files.flatMap((file) => {
+    const contents = unlessGone(() => readFileSync(resolve(root, file), 'utf8'))
+    return contents === undefined ? [] : scanSource(file, contents)
+  })
 }
 
 export function readBaseline(path: string): Baseline {

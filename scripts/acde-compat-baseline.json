@@ -27,11 +27,6 @@
     },
     {
       "file": "packages/editor/src/lib/geometry-script/client.ts",
-      "rule": "crypto-subtle",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/lib/geometry-script/client.ts",
       "rule": "worker",
       "count": 1
     },
@@ -53,11 +48,6 @@
     {
       "file": "packages/editor/src/lib/walkthrough-pointer-lock.ts",
       "rule": "request-pointer-lock",
-      "count": 2
-    },
-    {
-      "file": "packages/geometry-script/src/compile.ts",
-      "rule": "crypto-subtle",
       "count": 2
     },
     {

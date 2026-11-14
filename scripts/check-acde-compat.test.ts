@@ -9,6 +9,7 @@ import {
   type RuleId,
   readBaseline,
   run,
+  scanRepository,
   scanSource,
   shouldScan,
 } from './check-acde-compat'
@@ -23,6 +24,23 @@ describe('scanSource rules', () => {
     ['worker', "const w = new window.Worker('w.js')"],
     ['offscreen-canvas', 'const c = new OffscreenCanvas(1, 1)'],
     ['offscreen-canvas', "const ok = typeof OffscreenCanvas !== 'undefined'"],
+    ['offscreen-canvas', 'const c = new window.OffscreenCanvas(1, 1)'],
+    ['offscreen-canvas', 'const c = new globalThis.OffscreenCanvas(1, 1)'],
+    ['offscreen-canvas', 'const ok = !!self.OffscreenCanvas'],
+    ['offscreen-canvas', "const C = window['OffscreenCanvas']"],
+    ['offscreen-canvas', "const ok = typeof globalThis.OffscreenCanvas !== 'undefined'"],
+    ['worker', "const w = new globalThis.Worker('w.js')"],
+    ['worker', "const w = new self.SharedWorker('w.js')"],
+    ['worker', "const w = new window['Worker']('w.js')"],
+    ['create-image-bitmap', 'await globalThis.createImageBitmap(blob)'],
+    ['create-image-bitmap', 'await self.createImageBitmap?.(blob)'],
+    ['create-image-bitmap', "await window['createImageBitmap'](blob)"],
+    ['crypto-subtle', "await self.crypto.subtle.digest('SHA-256', data)"],
+    ['crypto-subtle', "await window['crypto']['subtle'].digest('SHA-256', data)"],
+    ['service-worker', "globalThis.navigator.serviceWorker.register('/sw.js')"],
+    ['service-worker', 'self.navigator.serviceWorker.ready'],
+    ['request-fullscreen', "window.document.documentElement['requestFullscreen']()"],
+    ['request-pointer-lock', 'globalThis.document.body.requestPointerLock()'],
     ['create-image-bitmap', 'await createImageBitmap(blob)'],
     ['create-image-bitmap', 'await window.createImageBitmap(blob)'],
     ['crypto-subtle', "await crypto.subtle.digest('SHA-256', data)"],
@@ -49,6 +67,9 @@ describe('scanSource rules', () => {
     ['worker', "const label = 'new Worker(url)'"],
     ['offscreen-canvas', 'function draw(c: HTMLCanvasElement | OffscreenCanvas) {}'],
     ['offscreen-canvas', 'const name = options.OffscreenCanvas'],
+    ['offscreen-canvas', "const name = options['OffscreenCanvas']"],
+    ['offscreen-canvas', 'const support = { OffscreenCanvas: true }'],
+    ['offscreen-canvas', 'let c: typeof globalThis.OffscreenCanvas'],
     ['create-image-bitmap', 'const createBitmap = loader.createImageBitmapLater(blob)'],
     ['crypto-subtle', 'crypto.getRandomValues(bytes)'],
     ['crypto-subtle', 'const tone = palette.subtle'],
@@ -115,13 +136,38 @@ describe('guard marker', () => {
     ])
   })
 
-  test('only skips the marked line when a file has several uses', () => {
+  test('a marker at the end of a line does not cover the next line', () => {
     const source = [
-      'if (!isAcde()) canvas.requestPointerLock() // acde-compat: guarded',
-      'const a = 1',
+      'if (!isAcde()) new Worker(url) // acde-compat: guarded',
+      'new Worker(otherUrl)',
+    ].join('\n')
+    expect(scanSource('a.ts', source).map(({ line, rule }) => [line, rule])).toEqual([
+      [2, 'worker'],
+    ])
+  })
+
+  test('a trailing marker covers only its line among adjacent uses', () => {
+    const source = [
+      'canvas.requestPointerLock() // acde-compat: guarded',
+      'canvas.requestPointerLock() // acde-compat: guarded',
       'canvas.requestPointerLock()',
     ].join('\n')
     expect(scanSource('a.ts', source).map((finding) => finding.line)).toEqual([3])
+  })
+
+  test.each([
+    '  // acde-compat: guarded',
+    '/* acde-compat: guarded */',
+    ' * acde-compat: guarded',
+    '// feature-detected above. acde-compat: guarded',
+  ])('a comment line of its own covers the next line: %s', (comment) => {
+    expect(rules(`${comment}\nconst w = new Worker(url)`)).toEqual([])
+  })
+
+  test('a marker inside a string on the line above does not cover the next line', () => {
+    expect(rules("const note = 'acde-compat: guarded'\nconst w = new Worker(url)")).toEqual([
+      'worker',
+    ])
   })
 })
 
@@ -255,6 +301,19 @@ describe('run', () => {
 
   test('collects only scanned files under apps/ and packages/', () => {
     expect(collectFiles(root)).toEqual(['apps/b/lib/hash.ts', 'packages/a/src/worker.ts'])
+  })
+
+  test('skips files and directories that disappear during the scan', () => {
+    const files = collectFiles(root, ['apps', 'packages', 'gone'])
+    rmSync(join(root, 'apps/b/lib/hash.ts'))
+    expect(scanRepository(root, [...files, 'packages/gone/src/a.ts']).map((f) => f.file)).toEqual([
+      'packages/a/src/worker.ts',
+    ])
+  })
+
+  test('still fails on a read error other than a missing path', () => {
+    mkdirSync(join(root, 'packages/a/src/dir.ts'))
+    expect(() => scanRepository(root, ['packages/a/src/dir.ts'])).toThrow()
   })
 
   test('--update rewrites the baseline from the current tree', () => {

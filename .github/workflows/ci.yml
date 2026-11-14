@@ -177,6 +177,9 @@ jobs:
       - name: Check standalone render bundle
         run: bun run check:render-bundle
 
+      - name: Check acde Web API compatibility
+        run: bun run check:acde-compat
+
       # Serves the build with `next start`: redirects, headers, the proxy,
       # server rendering, scene route handlers and the image optimizer.
       - name: Smoke-test the production editor server
