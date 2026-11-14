@@ -221,7 +221,7 @@ flowchart TB
 | 协议 | MIT，保留原 LICENSE（Copyright (c) 2026 Pascal Group Inc.） |
 | 知名度 | GitHub 约 2.5 万星（2026-11-14 查看） |
 | 形态 | Next.js 全栈网页应用（带服务器）+ 多包仓库（Turborepo 管理的多个内部包） |
-| 我们的仓库 | <https://github.com/chenqihao91/editor>，fork 自上游，保留全部提交历史 |
+| 我们的仓库 | <https://github.com/chenqihao91/superarchi>，fork 自上游，保留全部提交历史 |
 
 **为什么选它**
 
@@ -420,7 +420,7 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 
 | 交付物 | 位置 | 状态 |
 | --- | --- | --- |
-| 代码仓库（fork 自上游，保留提交历史） | <https://github.com/chenqihao91/editor> | ✅ 我们的改动在 `acde` 分支，接在上游的完整历史之后 |
+| 代码仓库（fork 自上游，保留提交历史） | <https://github.com/chenqihao91/superarchi> | ✅ 我们的改动在 `acde` 分支，接在上游的完整历史之后 |
 | Dopame OS 打包产物（纯 JS 包） | `acde build` 生成；已打包为 `super-archi-dopame-package.tar.gz`（不随代码提交） | ✅ 已能生成，并安装到 Dopame 运行 |
 | 路演 PPT | 待补充 | 🔧 |
 | 项目说明（含移植说明） | 本文件 | ✅ |
