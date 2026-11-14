@@ -59,3 +59,7 @@ og-test
 .claude/settings.local.json
 .vscode/launch.json
 .i18n-audit/
+
+# acde port
+.acde/
+.team/

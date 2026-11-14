@@ -76,6 +76,7 @@
         "zod": ">=4.6.7 <4.7",
       },
       "devDependencies": {
+        "@dopame/acde-api": "https://pkgs.dopame.ai/acde/0.0.11/acde-api-0.0.11.tar.gz",
         "@pascal/typescript-config": "*",
         "@types/howler": "^2.2.13",
         "@types/node": "^26.6.6",
@@ -515,6 +516,8 @@
     "@dnd-kit/sortable": ["@dnd-kit/sortable@10.0.0", "", { "dependencies": { "@dnd-kit/utilities": "^3.2.2", "tslib": "^2.0.0" }, "peerDependencies": { "@dnd-kit/core": "^6.3.0", "react": ">=16.8.0" } }, "sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg=="],
 
     "@dnd-kit/utilities": ["@dnd-kit/utilities@3.2.2", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg=="],
+
+    "@dopame/acde-api": ["@dopame/acde-api@https://pkgs.dopame.ai/acde/0.0.11/acde-api-0.0.11.tar.gz", { "peerDependencies": { "vite": ">=5" }, "optionalPeers": ["vite"] }, "sha512-b2ZvK6iIqQ4R6lCwSAd/eEhtOiGK+HdS5nBosFvYKN9xDR6fsDZdSIJV9gfWmX6Ne8faIYKxNFkwXJH+yHf3Ww=="],
 
     "@emnapi/core": ["@emnapi/core@1.11.2", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.2", "tslib": "^2.4.0" } }, "sha512-TC8MkTuZUtcTSiFeuC0ksCh9QIJ5+F21MvZ4Wn4ORfYaFJ/0dsiudv5tVkejgwZlwQ39jL9WWDe2lz8x0WglOA=="],
 

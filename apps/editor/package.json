@@ -48,6 +48,7 @@
     "zod": ">=4.6.7 <4.7"
   },
   "devDependencies": {
+    "@dopame/acde-api": "https://pkgs.dopame.ai/acde/0.0.11/acde-api-0.0.11.tar.gz",
     "@pascal/typescript-config": "*",
     "@types/howler": "^2.2.13",
     "@types/node": "^26.6.6",

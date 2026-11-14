@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@dopame/acde-api/config.schema.json",
+  "type": "app",
+  "id": "pascal-editor",
+  "label": "Pascal Editor",
+  "icon": "app",
+  "framework": "next",
+  "size": [1440, 900],
+  // The 256 MB default is too small for the 3D editor.
+  "heapMb": 2048,
+  "capabilities": { "fs": true }
+}
