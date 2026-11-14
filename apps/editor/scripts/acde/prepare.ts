@@ -2,9 +2,12 @@
 // `next build` (acde calls the framework directly, so no package-script hook
 // runs). Each step is idempotent and the script exits non-zero on any failure.
 import { copyFile, mkdir, readFile, rename, stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const appDirectory = path.resolve(import.meta.dir, '../..')
+const scriptPath = fileURLToPath(import.meta.url)
+const appDirectory = path.resolve(path.dirname(scriptPath), '../..')
 const repositoryRoot = path.resolve(appDirectory, '../..')
 export const acdeAssetsDirectory = path.join(appDirectory, 'public/acde-assets')
 
@@ -30,10 +33,8 @@ export async function syncFile(source: string, target: string): Promise<boolean>
  * Resolved from packages/editor, which owns the dependency.
  */
 export async function stageManifold(): Promise<StepResult> {
-  const glue = Bun.resolveSync(
-    'manifold-3d/manifold.js',
-    path.join(repositoryRoot, 'packages/editor'),
-  )
+  const fromEditor = createRequire(path.join(repositoryRoot, 'packages/editor/package.json'))
+  const glue = fromEditor.resolve('manifold-3d/manifold.js')
   const wasm = path.join(path.dirname(glue), 'manifold.wasm')
   await stat(wasm)
   const target = path.join(acdeAssetsDirectory, 'vendor/manifold')
@@ -51,7 +52,9 @@ const steps: { name: string; run: () => Promise<StepResult> }[] = [
   { name: 'manifold', run: stageManifold },
 ]
 
-if (import.meta.main) {
+const isEntryPoint = process.argv[1] !== undefined && path.resolve(process.argv[1]) === scriptPath
+
+if (isEntryPoint) {
   try {
     for (const step of steps) {
       const { copied, unchanged } = await step.run()
