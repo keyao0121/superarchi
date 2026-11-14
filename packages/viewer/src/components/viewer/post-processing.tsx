@@ -53,6 +53,7 @@ import {
 import { daylightRoomContext } from '../../lib/daylight/room-context'
 import { edgeColorFor, edgeOpacityScaleFor } from '../../lib/edge-style'
 import { PERF_OVERLAY_ENABLED } from '../../lib/gpu-perf'
+import { gtaoSupported } from '../../lib/gtao-support'
 import { createEdgeDepthSampler, inkedEdges } from '../../lib/ink-edges'
 import { refreshIsolation } from '../../lib/isolation'
 import { LayerPassIndex, LayerPassNode } from '../../lib/layer-pass'
@@ -460,7 +461,9 @@ const PostProcessingPasses = ({
     const daylight = isDaylight(atmosphere)
     renderer.toneMapping = daylight ? NeutralToneMapping : ACESFilmicToneMapping
     const aoTier =
-      ambientOcclusion && !perfDisable.ao && renderQuality !== 'low' ? renderQuality : null
+      ambientOcclusion && !perfDisable.ao && renderQuality !== 'low' && gtaoSupported(renderer)
+        ? renderQuality
+        : null
     const temporalAA = !transparentBackground && renderQuality !== 'low'
     const fxaaEnabled = !transparentBackground && renderQuality === 'low'
     const bloomEnabled = daylight && !transparentBackground && renderQuality === 'high'
@@ -478,6 +481,7 @@ const PostProcessingPasses = ({
       perfDisable,
       projectId,
       ambientOcclusion,
+      aoTier,
       colorGrading,
       transparentBackground,
       rendererCtor: (renderer as any).constructor?.name,
