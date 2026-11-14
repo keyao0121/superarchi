@@ -10,7 +10,11 @@
     "smoke": "bun scripts/smoke-production-server.ts",
     "lint": "biome lint",
     "check-types": "next typegen && tsc --noEmit",
-    "test": "bun test lib"
+    "test": "bun test lib",
+    "acde:build": "PASCAL_PORTABLE_BUILD=1 acde build",
+    "acde:dev": "PASCAL_PORTABLE_BUILD=1 acde dev",
+    "acde:test": "PASCAL_PORTABLE_BUILD=1 acde test",
+    "acde:install": "PASCAL_PORTABLE_BUILD=1 acde install"
   },
   "dependencies": {
     "@iconify/react": "^6.0.4",

@@ -3,10 +3,7 @@ import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
 
 const appDirectory = path.dirname(fileURLToPath(import.meta.url))
-// `acde build` runs `next build` with NEXT_PRIVATE_STANDALONE=1 and no ACDE_* variable.
-// Next only reads that flag, so it is set only by an outside packager asking for standalone.
-const acdeBuild = process.env.NEXT_PRIVATE_STANDALONE === '1'
-const portableBuild = process.env.PASCAL_PORTABLE_BUILD === '1' || acdeBuild
+const portableBuild = process.env.PASCAL_PORTABLE_BUILD === '1'
 const nextConfig: NextConfig = {
   ...(portableBuild
     ? { output: 'standalone' as const, outputFileTracingRoot: path.join(appDirectory, '../..') }
