@@ -31,6 +31,11 @@
       "import": "./dist/compile.js",
       "default": "./dist/compile.js"
     },
+    "./sha256": {
+      "types": "./dist/sha256.d.ts",
+      "import": "./dist/sha256.js",
+      "default": "./dist/sha256.js"
+    },
     "./sandbox": {
       "types": "./dist/sandbox.d.ts",
       "import": "./dist/sandbox.js",

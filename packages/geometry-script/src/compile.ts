@@ -1000,9 +1000,10 @@ function compactManifest(manifest: GeometryArtifactManifest): GeometryArtifactMa
 }
 
 async function digest(bytes: BufferSource): Promise<string> {
-  // An opaque-origin sandbox has no WebCrypto; its host hashes what it receives.
+  // An opaque-origin sandbox (and an acde page) has no WebCrypto; its host hashes what it
+  // receives, so the sandbox does not spend time on a hash that is replaced. acde-compat: guarded
   if (!globalThis.crypto?.subtle) return ''
-  const hash = await crypto.subtle.digest('SHA-256', bytes)
+  const hash = await crypto.subtle.digest('SHA-256', bytes) // acde-compat: guarded
   return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('')
 }
 

@@ -1,6 +1,7 @@
 import type { GeometryScriptParamValue } from '@pascal-app/core'
 import { sdfChecksOn } from '@pascal-app/core/usage-field'
 import type { GeometryScriptCompileOutput } from '@pascal-app/geometry-script'
+import { sha256Hex } from '@pascal-app/geometry-script/sha256'
 import type { GeometryScriptWorkerRequest, GeometryScriptWorkerResponse } from './protocol'
 
 const COMPILE_TIMEOUT_MS = 20_000
@@ -76,8 +77,10 @@ if (typeof window !== 'undefined') {
   })
 }
 
-async function sha256(bytes: ArrayBuffer | Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', bytes as BufferSource)
+export async function sha256(bytes: ArrayBuffer | Uint8Array): Promise<string> {
+  // acde pages have no WebCrypto. acde-compat: guarded
+  if (!globalThis.crypto?.subtle) return sha256Hex(bytes)
+  const hash = await crypto.subtle.digest('SHA-256', bytes as BufferSource) // acde-compat: guarded
   return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
