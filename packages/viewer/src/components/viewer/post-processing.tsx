@@ -413,11 +413,12 @@ const PostProcessingPasses = ({
     invalidate,
   ])
 
+  // The pipeline is built for a canvas that has a size, not for one size: its passes follow the
+  // drawing buffer. Rebuilt on every resize, it left the canvas blank while its shaders compiled.
+  const hasSize = size.width >= 1 && size.height >= 1
+
   // Build / rebuild the post-processing pipeline
   useEffect(() => {
-    const width = Math.floor(size.width)
-    const height = Math.floor(size.height)
-
     if (!(renderer && scene && camera)) {
       console.warn('[viewer/post-processing] Skipping pipeline build — missing dependency.', {
         hasRenderer: !!renderer,
@@ -427,7 +428,7 @@ const PostProcessingPasses = ({
       return
     }
 
-    if (width < 1 || height < 1) {
+    if (!hasSize) {
       skippedZeroSizeRef.current = true
       hasPipelineErrorRef.current = false
       disposePipeline()
@@ -488,8 +489,6 @@ const PostProcessingPasses = ({
       colorGrading,
       transparentBackground,
       rendererCtor: (renderer as any).constructor?.name,
-      width,
-      height,
     })
 
     hasPipelineErrorRef.current = false
@@ -875,8 +874,7 @@ const PostProcessingPasses = ({
     renderQuality,
     whiteBalance,
     exposureInverse,
-    size.height,
-    size.width,
+    hasSize,
     zoneLayers,
     sceneOnlyLayers,
     overlayLayers,
