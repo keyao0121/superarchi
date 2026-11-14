@@ -158,10 +158,58 @@ describe('guard marker', () => {
   test.each([
     '  // acde-compat: guarded',
     '/* acde-compat: guarded */',
-    ' * acde-compat: guarded',
+    '/*\n * feature-detected\n * acde-compat: guarded */',
+    '/* a */ // acde-compat: guarded',
     '// feature-detected above. acde-compat: guarded',
   ])('a comment line of its own covers the next line: %s', (comment) => {
     expect(rules(`${comment}\nconst w = new Worker(url)`)).toEqual([])
+  })
+
+  test('a block-comment marker followed by code covers only its own line', () => {
+    const source = [
+      '/* acde-compat: guarded */ if (!isAcde()) new Worker(url)',
+      'new Worker(otherUrl)',
+    ].join('\n')
+    expect(scanSource('a.ts', source).map(({ line, rule }) => [line, rule])).toEqual([
+      [2, 'worker'],
+    ])
+  })
+
+  test.each([
+    'const a = 1 /* acde-compat: guarded */',
+    'const a = 1; /* acde-compat: guarded */ const b = 2',
+    "const note = '/* acde-compat: guarded */'",
+  ])('a line with code does not cover the next line: %s', (above) => {
+    expect(rules(`${above}\nnew Worker(url)`)).toEqual(['worker'])
+  })
+
+  test('a marker on a line inside a multi-line template literal is not a comment', () => {
+    expect(
+      rules('const note = `\n// acde-compat: guarded\nnew Worker(url)`\nnew Worker(url)'),
+    ).toEqual(['worker'])
+  })
+
+  test('a marker inside a string on the same line does not cover it', () => {
+    expect(rules("new Worker(url, { name: 'acde-compat: guarded' })")).toEqual(['worker'])
+  })
+
+  test('a comment line inside JSX covers the next line', () => {
+    const source = [
+      'const A = () => (',
+      '  <div',
+      '    // acde-compat: guarded',
+      '    onClick={() => el.requestFullscreen()}',
+      '  />',
+      ')',
+    ].join('\n')
+    expect(rules(source, 'a.tsx')).toEqual([])
+  })
+
+  test('a JSDoc block ending in the marker covers the next line', () => {
+    expect(rules('/**\n * Only outside acde. acde-compat: guarded\n */\nnew Worker(url)')).toEqual([
+      'worker',
+    ])
+    expect(rules('/** Only outside acde. acde-compat: guarded */\nnew Worker(url)')).toEqual([])
   })
 
   test('a marker inside a string on the line above does not cover the next line', () => {
