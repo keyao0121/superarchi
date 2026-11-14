@@ -1,4 +1,3 @@
-import { canvasToBlob, createCanvas2D, getContext2D } from '@pascal-app/core/platform'
 import {
   type Camera,
   Color,
@@ -39,6 +38,7 @@ import {
 import { GRADE_PARAMS, SSGI_PARAMS } from '../components/viewer/post-processing'
 import type { SceneAtmosphereSource } from '../components/viewer/scene-atmosphere'
 import { backdropColors, backdropGradient, flatBackdropOutput } from './backdrop'
+import { canvasToBlob, createCanvas2D, getContext2D } from './canvas'
 import { DAYLIGHT_INK_BACKDROP, daylightGradeRgb, isDaylightAtmosphere } from './daylight/look'
 import { daylightRoomContext } from './daylight/room-context'
 import { type EdgeMode, edgeColorFor, edgeOpacityScaleFor } from './edge-style'

@@ -3,8 +3,7 @@ import {
   type SnapshotCapturedEvent,
   type SnapshotCaptureFailedEvent,
 } from '@pascal-app/core'
-import { decodeImage, releaseImage } from '@pascal-app/core/platform'
-import { useViewer } from '@pascal-app/viewer'
+import { decodeImage, releaseImage, useViewer } from '@pascal-app/viewer'
 import { canvasRect } from './projector'
 import type { Rect } from './types'
 

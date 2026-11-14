@@ -1,9 +1,10 @@
+import { isAcde } from '@pascal-app/core/platform'
 import type { RenderQuality } from '../store/use-viewer'
 
 /** What the browser tells us about the device: capabilities, never measured frame rate. */
 export type DeviceSignals = {
   backend: 'webgpu' | 'webgl'
-  /** GPU identity: WebGPU adapter info plus the WebGL renderer string, lower-cased. */
+  /** GPU identity: WebGPU adapter info plus the WebGL renderer string (not in acde), lower-cased. */
   gpu: string
   /** WebGPU fell back to a software adapter. */
   fallbackAdapter: boolean
@@ -73,10 +74,14 @@ export function readDeviceSignals(backend: 'webgpu' | 'webgl', device?: unknown)
   }
 }
 
-/** The WebGL renderer string (the GPU model on Chromium; masked on Safari and Firefox). */
+/**
+ * The WebGL renderer string (the GPU model on Chromium; masked on Safari and Firefox).
+ * Empty in acde, whose WebGL2 is broken and which only ever renders through WebGPU.
+ */
 function webglRenderer(): string {
+  if (isAcde()) return ''
   try {
-    const gl = document.createElement('canvas').getContext('webgl2')
+    const gl = document.createElement('canvas').getContext('webgl2') // acde-compat: guarded
     if (!gl) return ''
     const debug = gl.getExtension('WEBGL_debug_renderer_info')
     const name = String(gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER))

@@ -4,16 +4,6 @@
       "file": "packages/mcp/src/tools/author-scene.ts",
       "rule": "crypto-subtle",
       "count": 1
-    },
-    {
-      "file": "packages/viewer/src/lib/device-tier.ts",
-      "rule": "webgl-context",
-      "count": 1
-    },
-    {
-      "file": "packages/viewer/src/lib/renderer-capability.ts",
-      "rule": "webgl-context",
-      "count": 1
     }
   ]
 }

@@ -102,6 +102,16 @@ export { useNodeEvents } from './hooks/use-node-events'
 export { resolveAssetUrl, resolveCdnUrl } from './lib/asset-url'
 export { backdropColors, backdropGradient, deepSkyColor, horizonHazeColor } from './lib/backdrop'
 export { applyWorldScaleBoxUVs } from './lib/box-uv'
+export {
+  type Canvas2D,
+  type Canvas2DContext,
+  canvasToBlob,
+  createCanvas2D,
+  type DecodedImage,
+  decodeImage,
+  getContext2D,
+  releaseImage,
+} from './lib/canvas'
 // CSG primitives — used by chimney's roof-trim and other kinds whose
 // geometry subtracts pieces against their host. Lives in viewer
 // because three-bvh-csg / three-mesh-bvh are viewer-only deps.

@@ -1,6 +1,11 @@
 // @ts-expect-error — Bun types are not part of the viewer's production declaration build.
-import { describe, expect, test } from 'bun:test'
-import { classifyDevice, type DeviceSignals, isSoftwareRenderer } from './device-tier'
+import { afterEach, describe, expect, test } from 'bun:test'
+import {
+  classifyDevice,
+  type DeviceSignals,
+  isSoftwareRenderer,
+  readDeviceSignals,
+} from './device-tier'
 
 const desktop = (gpu: string, extra: Partial<DeviceSignals> = {}): DeviceSignals => ({
   backend: 'webgpu',
@@ -60,5 +65,69 @@ describe('device quality tier', () => {
     expect(isSoftwareRenderer(desktop('', { fallbackAdapter: true }))).toBe(true)
     expect(isSoftwareRenderer(desktop('ANGLE Metal Renderer: Apple M2 Pro'))).toBe(false)
     expect(isSoftwareRenderer(desktop('NVIDIA GeForce RTX 3070', { backend: 'webgl' }))).toBe(false)
+  })
+})
+
+describe('readDeviceSignals', () => {
+  const scope = globalThis as Record<string, unknown>
+  const saved = ['window', 'navigator', 'document'].map(
+    (key) => [key, Object.getOwnPropertyDescriptor(scope, key)] as const,
+  )
+  afterEach(() => {
+    for (const [key, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(scope, key, descriptor)
+      else delete scope[key]
+    }
+  })
+
+  /** A Mac page whose WebGL2 context names the GPU; returns how often a context was asked for. */
+  function page(userAgent: string) {
+    const contexts: string[] = []
+    const gl = {
+      RENDERER: 1,
+      getExtension: (name: string) =>
+        name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 2 } : null,
+      getParameter: () => 'ANGLE Metal Renderer: Apple M2 Pro',
+    }
+    const define = (key: string, value: unknown) =>
+      Object.defineProperty(scope, key, { value, configurable: true, writable: true })
+    define('window', {
+      matchMedia: () => ({ matches: false }),
+      screen: { width: 1440, height: 900 },
+    })
+    define('navigator', {
+      userAgent,
+      platform: 'MacIntel',
+      maxTouchPoints: 0,
+      hardwareConcurrency: 8,
+    })
+    define('document', {
+      createElement: () => ({
+        getContext: (id: string) => {
+          contexts.push(id)
+          return gl
+        },
+      }),
+    })
+    return contexts
+  }
+  const device = { adapterInfo: { vendor: 'apple', architecture: 'metal-3' } }
+
+  test('in acde with WebGPU ready, reads only the adapter and never asks for a WebGL context', () => {
+    const contexts = page(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) acdert/0.0.11',
+    )
+    expect(readDeviceSignals('webgpu', device).gpu).toBe('apple metal-3')
+    expect(contexts).toEqual([])
+  })
+
+  test('in a browser, adds the WebGL renderer string to the adapter info', () => {
+    const contexts = page(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+    )
+    expect(readDeviceSignals('webgpu', device).gpu).toBe(
+      'apple metal-3 angle metal renderer: apple m2 pro',
+    )
+    expect(contexts).toEqual(['webgl2'])
   })
 })

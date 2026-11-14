@@ -5,6 +5,7 @@ import { createExportTextureUtils } from './export-texture-utils'
 
 const globals = globalThis as unknown as { document?: unknown }
 const previousDocument = globals.document
+const previousAcdeAppId = process.env.ACDE_APP_ID
 
 type FakeRenderer = {
   renderer: WebGPURenderer
@@ -68,6 +69,8 @@ function compressedTexture(name: string, width = 8, height = 4): THREE.Compresse
 
 afterEach(() => {
   globals.document = previousDocument
+  if (previousAcdeAppId === undefined) delete process.env.ACDE_APP_ID
+  else process.env.ACDE_APP_ID = previousAcdeAppId
 })
 
 describe('createExportTextureUtils', () => {
@@ -163,5 +166,46 @@ describe('createExportTextureUtils', () => {
     expect(starts).toBe(1)
     expect(fake.calls.dispose).toBe(1)
     expect(fake.calls.destroy).toBe(1)
+  })
+})
+
+describe('the default decompress renderer', () => {
+  // The module keeps the first probe canvas it is handed, so every test here shares this one.
+  const contextRequests: string[] = []
+  const probe = {
+    getContext: (id: string) => {
+      contextRequests.push(id)
+      return null
+    },
+  }
+  const installProbeDocument = () => {
+    contextRequests.length = 0
+    globals.document = { createElement: () => probe }
+  }
+
+  // Bun has no WebGPU, so the renderer can only start through WebGL here.
+  test('in acde, fails outright without probing or starting WebGL', async () => {
+    installProbeDocument()
+    // bun test has no window, so isAcde() reads ACDE_APP_ID.
+    process.env.ACDE_APP_ID = 'pascal-editor'
+    const utils = createExportTextureUtils()
+
+    await expect(utils.decompress(compressedTexture('Color'))).rejects.toThrow(
+      'Could not start a GPU renderer',
+    )
+    expect(contextRequests).toEqual([])
+    await utils.dispose()
+  })
+
+  test('in a browser, still falls back to probing WebGL', async () => {
+    installProbeDocument()
+    delete process.env.ACDE_APP_ID
+    const utils = createExportTextureUtils()
+
+    await expect(utils.decompress(compressedTexture('Color'))).rejects.toThrow(
+      'Could not start a GPU renderer',
+    )
+    expect(contextRequests).toEqual(['webgl2'])
+    await utils.dispose()
   })
 })

@@ -112,6 +112,7 @@ export async function detectRendererCapability({
 
   if (allowWebGL && canvas) {
     try {
+      // acde-compat: guarded — the viewer and export decompression pass allowWebGL: !isAcde().
       const context = canvas.getContext('webgl2')
       if (context) return { backend: 'webgl', status: 'supported' }
     } catch (error) {

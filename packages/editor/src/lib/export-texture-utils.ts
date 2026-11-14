@@ -1,3 +1,4 @@
+import { isAcde } from '@pascal-app/core/platform'
 import { initializeGpuRenderer } from '@pascal-app/viewer'
 import type * as THREE from 'three'
 import { texture as textureNode, uv } from 'three/tsl'
@@ -20,6 +21,7 @@ let probeCanvas: HTMLCanvasElement | null | undefined
 async function initializeDecompressRenderer(): Promise<WebGPURenderer> {
   probeCanvas ??= typeof document === 'undefined' ? null : document.createElement('canvas')
   const result = await initializeGpuRenderer({
+    allowWebGL: !isAcde(),
     probeCanvas,
     createRenderer: (parameters) =>
       new WebGPURenderer(parameters as ConstructorParameters<typeof WebGPURenderer>[0]),

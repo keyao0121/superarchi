@@ -12,21 +12,19 @@ import {
 import { sceneViewInterior } from '@pascal-app/core/agent-operations'
 import {
   canvasToBlob,
-  createCanvas2D,
-  decodeImage,
-  getContext2D,
-  releaseImage,
-} from '@pascal-app/core/platform'
-import {
   computeHeroFraming,
+  createCanvas2D,
   createSnapshotPipeline,
+  decodeImage,
   GRID_LAYER,
+  getContext2D,
   heroCameraPose,
   holdLiveFrame,
   itemLightsForCapture,
   pendingSceneBuildCount,
   presentLevelsForCapture,
   refreshIsolation,
+  releaseImage,
   SNAPSHOT_MAX_EDGE,
   SNAPSHOT_MIME,
   SNAPSHOT_QUALITY,
