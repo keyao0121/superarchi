@@ -43,6 +43,7 @@ import {
   Video,
 } from 'lucide-react'
 import { useEffect } from 'react'
+import { toggleFullscreen } from '../../../lib/acde-fullscreen'
 import { addStoreyOnTop } from '../../../lib/add-storey'
 import { offerExteriorWallCopy } from '../level-wall-copy-prompt'
 import { getHistoryCommandState, runRedo, runUndo } from '../../../lib/history'
@@ -379,11 +380,7 @@ export function EditorCommands() {
         group: 'View',
         icon: <Maximize2 className="h-4 w-4" />,
         keywords: ['fullscreen', 'maximize', 'expand', 'window'],
-        execute: () =>
-          run(() => {
-            if (document.fullscreenElement) document.exitFullscreen()
-            else document.documentElement.requestFullscreen()
-          }),
+        execute: () => run(() => toggleFullscreen()),
       },
 
       // ── History ──────────────────────────────────────────────────────────

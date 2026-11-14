@@ -1,3 +1,4 @@
+import { canvasToBlob, createCanvas2D, getContext2D } from '@pascal-app/core/platform'
 import {
   type Camera,
   Color,
@@ -475,8 +476,8 @@ async function encodeCapture(
     captureWidth,
     captureHeight,
   )
-  const srcCanvas = new OffscreenCanvas(captureWidth, captureHeight)
-  srcCanvas.getContext('2d')!.putImageData(imageData, 0, 0)
+  const srcCanvas = createCanvas2D(captureWidth, captureHeight)
+  getContext2D(srcCanvas)!.putImageData(imageData, 0, 0)
 
   let outW: number
   let outH: number
@@ -484,22 +485,22 @@ async function encodeCapture(
 
   if (captureMode === 'viewport') {
     ;({ w: outW, h: outH } = clampSnapshotSize(captureWidth, captureHeight))
-    const offscreen = new OffscreenCanvas(outW, outH)
-    const ctx = offscreen.getContext('2d')!
+    const offscreen = createCanvas2D(outW, outH)
+    const ctx = getContext2D(offscreen)!
     if (outW !== captureWidth || outH !== captureHeight) ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(srcCanvas, 0, 0, captureWidth, captureHeight, 0, 0, outW, outH)
-    blob = await offscreen.convertToBlob(encoding)
+    blob = await canvasToBlob(offscreen, encoding)
   } else if (captureMode === 'area' && cropRegion) {
     const sx = Math.round(cropRegion.x * captureWidth)
     const sy = Math.round(cropRegion.y * captureHeight)
     const sourceW = Math.round(cropRegion.width * captureWidth)
     const sourceH = Math.round(cropRegion.height * captureHeight)
     ;({ w: outW, h: outH } = clampSnapshotSize(sourceW, sourceH))
-    const offscreen = new OffscreenCanvas(outW, outH)
-    const ctx = offscreen.getContext('2d')!
+    const offscreen = createCanvas2D(outW, outH)
+    const ctx = getContext2D(offscreen)!
     if (outW !== sourceW || outH !== sourceH) ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(srcCanvas, sx, sy, sourceW, sourceH, 0, 0, outW, outH)
-    blob = await offscreen.convertToBlob(encoding)
+    blob = await canvasToBlob(offscreen, encoding)
   } else {
     // Standard: center-crop to the requested aspect (default 1920×1080)
     const srcAspect = captureWidth / captureHeight
@@ -517,9 +518,9 @@ async function encodeCapture(
     }
     outW = standardW
     outH = standardH
-    const offscreen = new OffscreenCanvas(outW, outH)
-    offscreen.getContext('2d')!.drawImage(srcCanvas, sx, sy, sWidth, sHeight, 0, 0, outW, outH)
-    blob = await offscreen.convertToBlob(encoding)
+    const offscreen = createCanvas2D(outW, outH)
+    getContext2D(offscreen)!.drawImage(srcCanvas, sx, sy, sWidth, sHeight, 0, 0, outW, outH)
+    blob = await canvasToBlob(offscreen, encoding)
   }
 
   return { blob, outW, outH }

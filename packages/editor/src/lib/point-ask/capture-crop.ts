@@ -3,6 +3,7 @@ import {
   type SnapshotCapturedEvent,
   type SnapshotCaptureFailedEvent,
 } from '@pascal-app/core'
+import { decodeImage, releaseImage } from '@pascal-app/core/platform'
 import { useViewer } from '@pascal-app/viewer'
 import { canvasRect } from './projector'
 import type { Rect } from './types'
@@ -47,7 +48,7 @@ export function toCropRegion(rect: Rect, canvas: { width: number; height: number
 }
 
 async function blobToScaledDataUrl(blob: Blob): Promise<CapturedCrop> {
-  const bitmap = await createImageBitmap(blob)
+  const bitmap = await decodeImage(blob)
   const long = Math.max(bitmap.width, bitmap.height)
   const scale =
     long > CROP_LONG_SIDE_MAX ? CROP_LONG_SIDE_MAX / long : long < CROP_LONG_SIDE_MIN ? 1 : 1
@@ -59,7 +60,7 @@ async function blobToScaledDataUrl(blob: Blob): Promise<CapturedCrop> {
   const context = canvas.getContext('2d')
   if (!context) throw new Error('No 2D canvas to scale the picture')
   context.drawImage(bitmap, 0, 0, width, height)
-  bitmap.close()
+  releaseImage(bitmap)
   return { dataUrl: canvas.toDataURL('image/jpeg', 0.84), width, height }
 }
 

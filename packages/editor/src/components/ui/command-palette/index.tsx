@@ -11,6 +11,7 @@ import { create } from 'zustand'
 import { useShallow } from 'zustand/shallow'
 import { Dialog, DialogContent, DialogTitle } from './../../../components/ui/primitives/dialog'
 import { getLevelDisplayName } from '@pascal-app/core'
+import { subscribeFullscreen } from '../../../lib/acde-fullscreen'
 import { type CommandAction, useCommandRegistry } from '../../../store/use-command-registry'
 import { usePaletteViewRegistry } from '../../../store/use-palette-view-registry'
 
@@ -255,11 +256,7 @@ export function CommandPalette({ emptyAction }: { emptyAction?: CommandPaletteEm
   }, [])
 
   // Fullscreen tracking
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement)
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }, [])
+  useEffect(() => subscribeFullscreen(setIsFullscreen), [])
 
   // Cmd/Ctrl+K global shortcut
   useEffect(() => {

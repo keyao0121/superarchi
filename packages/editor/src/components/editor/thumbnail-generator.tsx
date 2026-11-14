@@ -11,6 +11,13 @@ import {
 } from '@pascal-app/core'
 import { sceneViewInterior } from '@pascal-app/core/agent-operations'
 import {
+  canvasToBlob,
+  createCanvas2D,
+  decodeImage,
+  getContext2D,
+  releaseImage,
+} from '@pascal-app/core/platform'
+import {
   computeHeroFraming,
   createSnapshotPipeline,
   GRID_LAYER,
@@ -1045,8 +1052,8 @@ export const ThumbnailGenerator = ({ onThumbnailCapture }: ThumbnailGeneratorPro
                 tiles: tiles.length,
                 software: limits.software,
               })
-              const picture = new OffscreenCanvas(width, height)
-              const context = picture.getContext('2d')
+              const picture = createCanvas2D(width, height)
+              const context = getContext2D(picture)
               if (!context) throw new Error('The picture canvas could not be created')
               for (const tile of tiles) {
                 const shot = captureSnapshotScene((restore) => {
@@ -1075,7 +1082,7 @@ export const ThumbnailGenerator = ({ onThumbnailCapture }: ThumbnailGeneratorPro
                   CAPTURE_SETTLE_MS,
                   'The GPU readback of the captured frame never came back.',
                 )
-                const bitmap = await createImageBitmap(result.blob)
+                const bitmap = await decodeImage(result.blob)
                 const { inner } = tile
                 context.drawImage(
                   bitmap,
@@ -1088,9 +1095,9 @@ export const ThumbnailGenerator = ({ onThumbnailCapture }: ThumbnailGeneratorPro
                   inner.w,
                   inner.h,
                 )
-                bitmap.close()
+                releaseImage(bitmap)
               }
-              const blob = await picture.convertToBlob({ type: 'image/png' })
+              const blob = await canvasToBlob(picture, { type: 'image/png' })
               trace('capture:done', { w: width, h: height, bytes: blob.size, tiles: tiles.length })
               if (captureMode !== undefined) cameraData.captureMode = captureMode
               cameraData.resolution = { w: width, h: height }
