@@ -2,6 +2,7 @@
 // include Bun ambient types in its production declaration build.
 import { describe, expect, mock, test } from 'bun:test'
 import {
+  detectRendererCapability,
   initializeGpuRenderer,
   type RendererBackendParameters,
   type RendererCapabilityCanvas,
@@ -336,5 +337,72 @@ describe('GPU renderer capability and initialization', () => {
     expect(result.status).toBe('unsupported')
     if (result.status === 'unsupported') expect(result.error).toBeInstanceOf(TypeError)
     expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
+  describe('with allowWebGL: false', () => {
+    test('reports unsupported without WebGPU and never probes WebGL', async () => {
+      const getContext = mock(() => ({}))
+      const result = await detectRendererCapability({
+        allowWebGL: false,
+        canvas: { getContext },
+        gpu: null,
+      })
+      expect(result.status).toBe('unsupported')
+      expect(getContext).not.toHaveBeenCalled()
+    })
+
+    test('still uses a working WebGPU device', async () => {
+      const device = {}
+      const createRenderer = mock(() => ({ init: async () => undefined }))
+      const result = await initializeGpuRenderer({
+        allowWebGL: false,
+        createRenderer,
+        gpu: { requestAdapter: async () => ({ requestDevice: async () => device }) },
+      })
+      expect(result.status).toBe('ready')
+      if (result.status === 'ready') expect(result.backend).toBe('webgpu')
+      expect(createRenderer).toHaveBeenCalledWith({ device })
+    })
+
+    test('creates no renderer when WebGPU is missing', async () => {
+      const getContext = mock(() => ({}))
+      const createRenderer = mock(() => ({ init: async () => undefined }))
+      const result = await initializeGpuRenderer({
+        allowWebGL: false,
+        createRenderer,
+        gpu: null,
+        probeCanvas: { getContext },
+      })
+      expect(result.status).toBe('unsupported')
+      expect(createRenderer).not.toHaveBeenCalled()
+      expect(getContext).not.toHaveBeenCalled()
+    })
+
+    test('does not retry on WebGL after WebGPU initialization fails', async () => {
+      const destroy = mock(() => undefined)
+      const initError = new Error('WebGPU init failed')
+      const createRenderer = mock((_: RendererBackendParameters) => ({
+        dispose: () => undefined,
+        init: async () => {
+          throw initError
+        },
+      }))
+      const result = await initializeGpuRenderer({
+        allowWebGL: false,
+        createRenderer,
+        gpu: { requestAdapter: async () => ({ requestDevice: async () => ({ destroy }) }) },
+        probeCanvas: canvasWithContexts({ webgl2: {} }),
+      })
+      expect(result).toEqual({ error: initError, status: 'unsupported' })
+      expect(createRenderer).toHaveBeenCalledTimes(1)
+      expect(destroy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test('probes WebGL by default when WebGPU is missing', async () => {
+    const getContext = mock(() => ({}))
+    const result = await detectRendererCapability({ canvas: { getContext }, gpu: null })
+    expect(result).toEqual({ backend: 'webgl', status: 'supported' })
+    expect(getContext).toHaveBeenCalledWith('webgl2')
   })
 })

@@ -6,7 +6,7 @@ import ts from 'typescript'
 // Web APIs the acde page runtime does not support (acde docs, "Web compatibility" →
 // "Not yet supported"). Existing uses are recorded in a baseline so that upstream merges
 // cannot introduce new ones unnoticed; a use that only runs outside acde is marked
-// `acde-compat: guarded` at the end of its line or in a comment line directly above.
+// `acde-compat: guarded` in a comment on its line, or in a line of only comments directly above.
 
 export const ruleIds = [
   'worker',
@@ -130,10 +130,42 @@ function ruleFor(node: ts.Node): RuleId | undefined {
     return 'remote-esm-import'
 }
 
-// A marker at the end of a line of code covers only that line; a comment line of its own
-// covers the line below.
-function isGuardComment(line: string | undefined) {
-  return !!line && /^\s*(?:\/\/|\/\*|\*)/.test(line) && line.includes(guardMarker)
+const isJSDocNode = (node: ts.Node) =>
+  node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode
+
+// Lines (0-based, in `source`) where a comment holds the marker, and lines any code token
+// touches. A marker covers its own line; it covers the line below only when its line holds
+// nothing but comments, so `/* marker */ code` or `code // marker` never reach the next line.
+function guardLines(source: ts.SourceFile) {
+  const text = source.text
+  const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line
+  const comments = new Map<number, number>()
+  const code = new Set<number>()
+  const visit = (node: ts.Node): void => {
+    if (isJSDocNode(node)) return
+    const children = node.getChildren(source)
+    if (children.length) {
+      for (const child of children) visit(child)
+      return
+    }
+    for (const range of [
+      ...(ts.getLeadingCommentRanges(text, node.pos) ?? []),
+      ...(ts.getTrailingCommentRanges(text, node.end) ?? []),
+    ])
+      comments.set(range.pos, range.end)
+    const blankJsxText = ts.isJsxText(node) && node.containsOnlyTriviaWhiteSpaces
+    if (node.kind === ts.SyntaxKind.EndOfFileToken || blankJsxText) return
+    const last = lineOf(Math.max(node.getStart(source), node.end - 1))
+    for (let line = lineOf(node.getStart(source)); line <= last; line++) code.add(line)
+  }
+  visit(source)
+  const marked = new Set<number>()
+  for (const [pos, end] of comments) {
+    const comment = text.slice(pos, end)
+    for (let at = comment.indexOf(guardMarker); at >= 0; at = comment.indexOf(guardMarker, at + 1))
+      marked.add(lineOf(pos + at))
+  }
+  return (line: number) => marked.has(line) || (marked.has(line - 1) && !code.has(line - 1))
 }
 
 const inlineScript = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
@@ -160,12 +192,14 @@ function scanText(
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
   const lineOf = (position: number) =>
     firstLine + source.getLineAndCharacterOfPosition(position).line
+  let isGuarded: ((line: number) => boolean) | undefined
   const visit = (node: ts.Node): void => {
     const rule = ruleFor(node)
     if (rule) {
       const line = lineOf(node.getStart(source))
-      const guarded = lines[line]?.includes(guardMarker) || isGuardComment(lines[line - 1])
-      if (!guarded) findings.push({ file, line: line + 1, rule, text: lines[line]?.trim() ?? '' })
+      isGuarded ??= guardLines(source)
+      if (!isGuarded(line - firstLine))
+        findings.push({ file, line: line + 1, rule, text: lines[line]?.trim() ?? '' })
     }
     if (isStringish(node)) {
       const start = node.getStart(source)

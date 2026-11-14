@@ -66,6 +66,7 @@ function getWorker(): Worker {
   if (typeof Worker === 'undefined') {
     throw new Error('Web Workers are unavailable in this environment.')
   }
+  // acde-compat: guarded — only reached where Worker exists; see defaultManifoldRunner
   worker = new Worker(new URL('./print-shell-compiler-manifold.worker.ts', import.meta.url), {
     type: 'module',
   })
@@ -110,6 +111,30 @@ export const runManifoldWorker: ManifoldCompileRunner = (meshes) => {
   })
 }
 
+/**
+ * Runs Manifold on the calling thread, for runtimes without Web Workers (acde).
+ * A long compile blocks that thread for its whole duration.
+ */
+export const runManifoldInProcess: ManifoldCompileRunner = async (meshes) => {
+  const { compileManifoldMeshData } = await import('./print-shell-compiler-manifold-core')
+  return compileManifoldMeshData(meshes, manifoldRuntime)
+}
+
+/** The worker wherever one can start; otherwise the in-process runner. */
+export function defaultManifoldRunner(): ManifoldCompileRunner {
+  return typeof Worker === 'undefined' ? runManifoldInProcess : runManifoldWorker
+}
+
+function compiledDiagnostic(runner: ManifoldCompileRunner): { code: string; where: string } {
+  if (runner === runManifoldWorker) {
+    return { code: 'manifold_worker_compiler', where: ' off the main thread' }
+  }
+  if (runner === runManifoldInProcess) {
+    return { code: 'manifold_in_process_compiler', where: ' on the main thread (no Web Workers)' }
+  }
+  return { code: 'manifold_compiler_candidate', where: ' through the in-process test runner' }
+}
+
 function blockedResult(
   inputMeshCount: number,
   sourceNodeIds: Iterable<string>,
@@ -130,7 +155,7 @@ export async function compileSemanticPrintShellWithManifold(
   nodes: Record<string, AnyNode>,
   options: SemanticManifoldCompileOptions = {},
 ): Promise<PrintShellCompileResult> {
-  const { runner = runManifoldWorker, ...semanticOptions } = options
+  const { runner = defaultManifoldRunner(), ...semanticOptions } = options
   const prepared = prepareSemanticPrintShellSource(source, nodes, {
     ...semanticOptions,
     wallSolids: semanticOptions.wallSolids ?? true,
@@ -181,12 +206,11 @@ export async function compileSemanticPrintShellWithManifold(
   const scene = new THREE.Group()
   scene.name = 'compiled-print-shell'
   scene.add(mesh)
+  const compiled = compiledDiagnostic(runner)
   diagnostics.push({
     severity: 'info',
-    code: runner === runManifoldWorker ? 'manifold_worker_compiler' : 'manifold_compiler_candidate',
-    message: `Compiled with Manifold in ${output.durationMs.toFixed(1)} ms${
-      runner === runManifoldWorker ? ' off the main thread' : ' through the in-process test runner'
-    }.`,
+    code: compiled.code,
+    message: `Compiled with Manifold in ${output.durationMs.toFixed(1)} ms${compiled.where}.`,
     nodeIds: Array.from(input.sourceNodeIds).sort(),
   })
   return {

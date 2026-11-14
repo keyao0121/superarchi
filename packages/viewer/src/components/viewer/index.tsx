@@ -11,6 +11,7 @@ import {
   useInteractive,
   useScene,
 } from '@pascal-app/core'
+import { isAcde } from '@pascal-app/core/platform'
 import { Canvas, extend, type ThreeElement, useFrame, useThree } from '@react-three/fiber'
 import {
   type ComponentType,
@@ -683,7 +684,7 @@ const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
   const immersiveActive = immersive != null
 
   if (showGpuFallback) {
-    return <UnsupportedGpuViewerFallback />
+    return <UnsupportedGpuViewerFallback reason={isAcde() ? 'platform' : 'browser'} />
   }
   return (
     <>
@@ -709,6 +710,9 @@ const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
             if (cached) return cached
             const promise = (async () => {
               const result = await initializeGpuRenderer({
+                // acde documents WebGL as unsupported and the context it does hand out on macOS
+                // fails every frame, so under acde only WebGPU (Linux) is used.
+                allowWebGL: !isAcde(),
                 forceWebGL: immersiveActive,
                 // Supplying `device` makes three skip its own `requestAdapter`,
                 // so R3F's `powerPreference` only reaches the GPU if we forward it.
@@ -744,7 +748,14 @@ const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
               }
 
               if (canvas) WEBGPU_RENDERER_CACHE.delete(canvas)
-              console.error('[viewer] WebGPURenderer init failed', result.error)
+              if (isAcde()) {
+                console.warn(
+                  '[viewer] WebGPU is unavailable in this acde runtime; the 3D view is off.',
+                  result.error,
+                )
+              } else {
+                console.error('[viewer] WebGPURenderer init failed', result.error)
+              }
               setRendererInitFailed(true)
               // Never settles on purpose. Rejecting is what produced
               // MONOREPO-EDITOR-59: R3F awaits this inside its own configure()

@@ -1281,3 +1281,58 @@ export default function build({ THREE }) {
     expect([...colours].sort()).toEqual(['east 0,0,1', 'west 1,0,0'])
   })
 })
+
+describe('shadowGlobals (compiling on the host thread, no sandbox worker)', () => {
+  const PROBE = `
+export default function build() {
+  const seen = [
+    typeof fetch,
+    typeof XMLHttpRequest,
+    typeof WebSocket,
+    typeof Worker,
+    typeof indexedDB,
+    typeof window,
+    typeof self,
+    typeof globalThis,
+    typeof document,
+    typeof localStorage,
+    typeof navigator,
+    typeof location,
+    (function () { return typeof this })(),
+  ]
+  throw new Error('seen:' + seen.join(','))
+}
+`
+
+  test('the script sees none of the ambient capabilities, nor the global object through this', async () => {
+    await expect(compileGeometryScript({ code: PROBE, shadowGlobals: true })).rejects.toThrow(
+      `seen:${Array(13).fill('undefined').join(',')}`,
+    )
+  })
+
+  test('without it the script runs as before', async () => {
+    const error = await compileGeometryScript({ code: PROBE }).catch((e: Error) => e)
+    const seen = String((error as Error).message)
+      .replace('seen:', '')
+      .split(',')
+    expect(seen[0]).toBe('function') // fetch
+    expect(seen[7]).toBe('object') // globalThis
+    expect(seen[12]).toBe('object') // sloppy-mode this
+  })
+
+  test('real scripts compile to the same artifact either way', async () => {
+    for (const code of [
+      CHEF_LAMP_SCRIPT,
+      FITTED_CABINET_SCRIPT,
+      SLIDING_DOOR_SCRIPT,
+      CINEMA_SCREEN_SCRIPT,
+      SASH,
+      plane('DoubleSide'),
+    ]) {
+      const plain = await compileGeometryScript({ code })
+      const shadowed = await compileGeometryScript({ code, shadowGlobals: true })
+      expect(shadowed.manifest).toEqual(plain.manifest)
+      expect(shadowed.sha256).toBe(plain.sha256)
+    }
+  })
+})

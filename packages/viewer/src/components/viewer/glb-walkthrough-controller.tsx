@@ -23,6 +23,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh'
 import { useGLTFKTX2 } from '../../hooks/use-gltf-ktx2'
+import { attachDragLook, pointerLockSupported } from '../../lib/drag-look'
 import { BATCHED_LAYER, SCENE_LAYER } from '../../lib/layers'
 import useViewer from '../../store/use-viewer'
 import BVHEcctrl, { type BVHEcctrlApi, type MovementInput } from './bvh-ecctrl'
@@ -353,20 +354,25 @@ export function GlbWalkthroughController({ url }: { url: string }) {
   // Pointer-lock look + click-to-lock fallback + Esc/unlock to exit. Once the
   // pointer has been locked, releasing it (Esc — the browser swallows that
   // keydown, so we can't rely on it; or any other unlock) leaves the walkthrough
-  // in a single press rather than just freeing the cursor.
+  // in a single press rather than just freeing the cursor. Without pointer
+  // lock, dragging on the canvas turns the view and only Esc leaves.
   useEffect(() => {
     const canvas = gl.domElement
+    const lockable = pointerLockSupported()
     let wasLocked = false
-    const onMouseMove = (event: MouseEvent) => {
-      if (document.pointerLockElement !== canvas) return
-      yawRef.current -= event.movementX * LOOK_SENSITIVITY
+    const look = (movementX: number, movementY: number) => {
+      yawRef.current -= movementX * LOOK_SENSITIVITY
       pitchRef.current = Math.max(
         -(Math.PI / 2 - 0.05),
-        Math.min(Math.PI / 2 - 0.05, pitchRef.current - event.movementY * LOOK_SENSITIVITY),
+        Math.min(Math.PI / 2 - 0.05, pitchRef.current - movementY * LOOK_SENSITIVITY),
       )
     }
+    const onMouseMove = (event: MouseEvent) => {
+      if (document.pointerLockElement !== canvas) return
+      look(event.movementX, event.movementY)
+    }
     const onClick = () => {
-      if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.()
+      if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.() // acde-compat: guarded
     }
     const onKeyDown = (event: KeyboardEvent) => {
       // When locked, the browser intercepts Esc to release the pointer and the
@@ -383,8 +389,8 @@ export function GlbWalkthroughController({ url }: { url: string }) {
           suspendRef.current = true
           useViewer.getState().setWalkthroughSuspended(true)
           document.exitPointerLock()
-        } else if (suspendRef.current) {
-          const result = canvas.requestPointerLock?.() as Promise<void> | undefined
+        } else if (suspendRef.current && lockable) {
+          const result = canvas.requestPointerLock?.() as Promise<void> | undefined // acde-compat: guarded
           if (result && typeof result.catch === 'function') result.catch(() => {})
         }
       }
@@ -413,13 +419,17 @@ export function GlbWalkthroughController({ url }: { url: string }) {
         useViewer.getState().setWalkthroughMode(false)
       }
     }
-    document.addEventListener('mousemove', onMouseMove)
-    canvas.addEventListener('click', onClick)
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', onBlur)
-    document.addEventListener('pointerlockchange', onPointerLockChange)
+    const detachDragLook = lockable ? null : attachDragLook(canvas, { onLook: look })
+    if (lockable) {
+      document.addEventListener('mousemove', onMouseMove)
+      canvas.addEventListener('click', onClick)
+      document.addEventListener('pointerlockchange', onPointerLockChange)
+    }
     return () => {
+      detachDragLook?.()
       document.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('click', onClick)
       document.removeEventListener('keydown', onKeyDown)
@@ -438,8 +448,8 @@ export function GlbWalkthroughController({ url }: { url: string }) {
   useEffect(() => {
     if (!(world && start)) return
     const canvas = gl.domElement
-    if (document.pointerLockElement === canvas) return
-    const result = canvas.requestPointerLock?.() as Promise<void> | undefined
+    if (!pointerLockSupported() || document.pointerLockElement === canvas) return
+    const result = canvas.requestPointerLock?.() as Promise<void> | undefined // acde-compat: guarded
     if (result && typeof result.catch === 'function') result.catch(() => {})
   }, [gl, world, start])
 

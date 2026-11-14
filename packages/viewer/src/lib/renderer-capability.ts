@@ -81,11 +81,14 @@ async function requestWebGpuDevice(gpu: RendererGpu, powerPreference?: RendererP
 }
 
 export async function detectRendererCapability({
+  allowWebGL = true,
   canvas = browserCanvas(),
   gpu = browserGpu(),
   powerPreference,
   webgpuTimeoutMs = WEBGPU_INITIALIZATION_TIMEOUT_MS,
 }: {
+  /** False where WebGL is known to be absent, so it is neither probed nor tried. */
+  allowWebGL?: boolean
   canvas?: RendererCapabilityCanvas | null
   gpu?: RendererGpu | null
   powerPreference?: RendererPowerPreference
@@ -107,7 +110,7 @@ export async function detectRendererCapability({
     }
   }
 
-  if (canvas) {
+  if (allowWebGL && canvas) {
     try {
       const context = canvas.getContext('webgl2')
       if (context) return { backend: 'webgl', status: 'supported' }
@@ -120,6 +123,7 @@ export async function detectRendererCapability({
 }
 
 export async function initializeGpuRenderer<Renderer extends InitializableRenderer>({
+  allowWebGL = true,
   createRenderer,
   forceWebGL = false,
   gpu,
@@ -127,6 +131,7 @@ export async function initializeGpuRenderer<Renderer extends InitializableRender
   probeCanvas = browserCanvas(),
   webgpuTimeoutMs = WEBGPU_INITIALIZATION_TIMEOUT_MS,
 }: {
+  allowWebGL?: boolean
   createRenderer: (parameters: RendererBackendParameters) => Renderer
   forceWebGL?: boolean
   gpu?: RendererGpu | null
@@ -135,6 +140,7 @@ export async function initializeGpuRenderer<Renderer extends InitializableRender
   webgpuTimeoutMs?: number
 }): Promise<RendererInitializationResult<Renderer>> {
   const capability = await detectRendererCapability({
+    allowWebGL,
     canvas: probeCanvas,
     gpu: forceWebGL ? null : gpu,
     powerPreference,
@@ -161,6 +167,7 @@ export async function initializeGpuRenderer<Renderer extends InitializableRender
     if (capability.backend !== 'webgpu') return { error, status: 'unsupported' }
 
     releaseDevice(capability.device)
+    if (!allowWebGL) return { error, status: 'unsupported' }
 
     renderer = undefined
     try {

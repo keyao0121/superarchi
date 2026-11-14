@@ -62,4 +62,5 @@ og-test
 
 # acde port
 .acde/
+apps/editor/public/acde-assets/
 .team/

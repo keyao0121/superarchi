@@ -1396,8 +1396,8 @@ function replaceReferencedTextures(
  *  covers non-DOM runs (bun tests), where the exporter itself never runs. */
 function createPlaceholderCanvas(): OffscreenCanvas | HTMLCanvasElement | null {
   const canvas =
-    typeof OffscreenCanvas !== 'undefined'
-      ? new OffscreenCanvas(1, 1)
+    typeof OffscreenCanvas !== 'undefined' // acde-compat: guarded
+      ? new OffscreenCanvas(1, 1) // acde-compat: guarded
       : typeof document !== 'undefined'
         ? Object.assign(document.createElement('canvas'), { width: 1, height: 1 })
         : null

@@ -39325,6 +39325,36 @@ msgstr "薄暮"
 msgid "viewer.theme.verdant"
 msgstr "緑景"
 
+# Source-Hash: 8d295590dd53aa90
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "This browser or environment could not initialize WebGPU or WebGL, so Pascal cannot render the 3D scene here. Try opening the editor in a browser with hardware acceleration enabled."
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.browserDetail"
+msgstr "このブラウザーまたは環境では WebGPU も WebGL も初期化できなかったため、Pascal はここで 3D シーンを描画できません。ハードウェアアクセラレーションを有効にしたブラウザーでエディターを開いてください。"
+
+# Source-Hash: b7d8cf668c282bb0
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "3D view isn’t available on this platform yet. Open this project on Linux or Dopame OS to see it in 3D."
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.platformDetail"
+msgstr "このプラットフォームでは 3D ビューはまだ利用できません。3D で表示するには、Linux または Dopame OS でこのプロジェクトを開いてください。"
+
+# Source-Hash: 98f5d6727e5d6516
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "3D viewer unavailable"
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.title"
+msgstr "3D ビューアーを利用できません"
+
 # Source-Hash: 892d5dd34372028b
 # Review: human
 # English: "Guides"

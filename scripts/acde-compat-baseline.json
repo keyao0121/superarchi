@@ -11,41 +11,6 @@
       "count": 1
     },
     {
-      "file": "packages/editor/src/components/editor/thumbnail-generator.tsx",
-      "rule": "create-image-bitmap",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/components/editor/thumbnail-generator.tsx",
-      "rule": "offscreen-canvas",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/components/ui/command-palette/editor-commands.tsx",
-      "rule": "request-fullscreen",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/lib/geometry-script/client.ts",
-      "rule": "worker",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/lib/glb-export.ts",
-      "rule": "offscreen-canvas",
-      "count": 2
-    },
-    {
-      "file": "packages/editor/src/lib/point-ask/capture-crop.ts",
-      "rule": "create-image-bitmap",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/lib/print-shell-compiler-manifold-worker.ts",
-      "rule": "worker",
-      "count": 1
-    },
-    {
       "file": "packages/editor/src/lib/walkthrough-pointer-lock.ts",
       "rule": "request-pointer-lock",
       "count": 2
@@ -56,21 +21,6 @@
       "count": 1
     },
     {
-      "file": "packages/viewer/src/components/viewer/drone-controller.tsx",
-      "rule": "request-pointer-lock",
-      "count": 1
-    },
-    {
-      "file": "packages/viewer/src/components/viewer/glb-walkthrough-controller.tsx",
-      "rule": "request-pointer-lock",
-      "count": 3
-    },
-    {
-      "file": "packages/viewer/src/components/viewer/live-walkthrough-controller.tsx",
-      "rule": "request-pointer-lock",
-      "count": 2
-    },
-    {
       "file": "packages/viewer/src/lib/device-tier.ts",
       "rule": "webgl-context",
       "count": 1
@@ -79,11 +29,6 @@
       "file": "packages/viewer/src/lib/renderer-capability.ts",
       "rule": "webgl-context",
       "count": 1
-    },
-    {
-      "file": "packages/viewer/src/lib/snapshot-pipeline.ts",
-      "rule": "offscreen-canvas",
-      "count": 4
     }
   ]
 }
