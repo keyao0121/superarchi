@@ -233,6 +233,37 @@ export async function openEditor(page: Page): Promise<void> {
   await page.waitForTimeout(1500)
 }
 
+/**
+ * Reloads the editor as a runtime without a 3D backend, so the viewer shows its
+ * unsupported-GPU notice: `browser` hides WebGPU and WebGL, `platform` also
+ * reports the acde user agent, where WebGL is never tried. The script is
+ * dropped once the page has loaded, so later surfaces get the real runtime.
+ */
+async function openWithoutGpu(page: Page, reason: 'browser' | 'platform'): Promise<void> {
+  const script = await page.addInitScript((acde) => {
+    Object.defineProperty(Navigator.prototype, 'gpu', { get: () => undefined })
+    if (acde) {
+      const userAgent = `${navigator.userAgent} acdert/0.0.11`
+      Object.defineProperty(Navigator.prototype, 'userAgent', { get: () => userAgent })
+      return
+    }
+    const getContext = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      ...args: Parameters<typeof getContext>
+    ) {
+      return /^webgl/.test(args[0]) ? null : getContext.apply(this, args)
+    } as typeof getContext
+  }, reason === 'platform')
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await page.locator(`[data-viewer-unsupported="${reason}"]`).waitFor({ timeout: 120_000 })
+  } finally {
+    await script.dispose()
+  }
+  await page.waitForTimeout(500)
+}
+
 /** The accessible name a control has in en-XA, for locating it by its translated label. */
 export const pseudo = (english: string) => pseudoLocalize(english)
 
@@ -295,6 +326,25 @@ export const surfaces: PseudoSurface[] = [
     path: editorPath,
     steps: (page) => openInEditor(page, 'More views'),
     scope: '[role="menu"]',
+  },
+  {
+    name: 'viewer-unsupported-browser',
+    path: editorPath,
+    steps: (page) => openWithoutGpu(page, 'browser'),
+    scope: '[data-viewer-unsupported]',
+  },
+  {
+    name: 'viewer-unsupported-platform',
+    path: editorPath,
+    steps: (page) => openWithoutGpu(page, 'platform'),
+    scope: '[data-viewer-unsupported]',
+  },
+  {
+    name: 'viewer-unsupported-platform-mobile',
+    path: editorPath,
+    steps: (page) => openWithoutGpu(page, 'platform'),
+    scope: '[data-viewer-unsupported]',
+    viewport: { width: 390, height: 844 },
   },
   { name: 'build-tab', path: editorPath, steps: openEditor, scope: '[data-surface="build-tab"]' },
   {
