@@ -182,6 +182,14 @@ export class PascalI18n {
     const translated = this.locale === 'en' || Object.hasOwn(this.i18n.messages, id)
     const runtime = translated ? this.i18n : this.englishI18n
     if (!translated) warnMissing(id, this.locale)
+    // A message no catalog has renders from its source text, as Lingui does. Plain text is
+    // its own compiled form; passing it through would only make production builds (no
+    // runtime compiler) warn "Uncompiled message" on every render, e.g. for plugin labels.
+    const source =
+      (typeof idOrDescriptor === 'string' ? options?.message : idOrDescriptor.message) ?? id
+    if (!Object.hasOwn(runtime.messages, id) && isPlainMessage(source)) {
+      return source
+    }
     return typeof idOrDescriptor === 'string'
       ? runtime._(idOrDescriptor, values, options)
       : runtime._(idOrDescriptor)
@@ -200,6 +208,11 @@ export class PascalI18n {
     this.version += 1
     for (const listener of [...this.listeners]) listener()
   }
+}
+
+/** Text whose ICU compiled form is itself: no arguments, quoting or escape sequences. */
+function isPlainMessage(message: string): boolean {
+  return !/[{}\\]|''/.test(message)
 }
 
 /**
