@@ -20,7 +20,7 @@ addEventListener('message', (event) => {
   if (event.source !== parent) return
   const data = event.data
   if (data && data.type === 'start') {
-    // acde-compat: guarded (the frame starts only where Worker exists; see compileGeometryScriptInWorker)
+    // acde-compat: guarded (the frame starts only where Worker exists; see defaultGeometryScriptCompiler)
     worker = new Worker(URL.createObjectURL(new Blob([data.source], { type: 'text/javascript' })))
     worker.onmessage = (e) => parent.postMessage(e.data, '*', e.data && e.data.output ? [e.data.output.glb] : [])
     worker.onerror = (e) => parent.postMessage({ crashed: e.message || 'The compile worker crashed' }, '*')
@@ -137,22 +137,22 @@ function startSandbox(): Promise<Window> {
   return started
 }
 
-/**
- * Runs a geometry script in the sandbox and returns its GLB + manifest. A
- * script that hangs is stopped with its sandbox; the next compile starts fresh.
- * Without Web Workers (acde) it compiles on this thread instead; the hashes are
- * still set here either way.
- */
-export async function compileGeometryScriptInWorker(input: {
+export type GeometryScriptCompileInput = {
   code: string
   params?: Record<string, GeometryScriptParamValue>
   /** What the host builds it for (a room's floor), in the host's frame. */
   inputs?: Record<string, unknown>
-}): Promise<GeometryScriptCompileOutput> {
-  if (typeof Worker === 'undefined') {
-    const output = await compileGeometryScriptOnMainThread(input, COMPILE_TIMEOUT_MS)
-    return withOwnHashes(output, input.code)
-  }
+}
+
+export type GeometryScriptCompiler = (
+  input: GeometryScriptCompileInput,
+) => Promise<GeometryScriptCompileOutput>
+
+/**
+ * Runs a geometry script in the sandbox and returns its GLB + manifest. A
+ * script that hangs is stopped with its sandbox; the next compile starts fresh.
+ */
+export const compileInSandbox: GeometryScriptCompiler = async (input) => {
   const target = await startSandbox()
   const id = nextId++
   const request: GeometryScriptWorkerRequest = {
@@ -170,4 +170,21 @@ export async function compileGeometryScriptInWorker(input: {
     pending.set(id, { code: input.code, resolve, reject, timeout })
     target.postMessage(request, '*')
   })
+}
+
+/** Compiles on this thread, for runtimes without Web Workers (acde); the hashes are still set here. */
+export const compileOnMainThread: GeometryScriptCompiler = async (input) => {
+  const output = await compileGeometryScriptOnMainThread(input, COMPILE_TIMEOUT_MS)
+  return withOwnHashes(output, input.code)
+}
+
+/** The sandbox wherever Worker exists; otherwise this thread. */
+export function defaultGeometryScriptCompiler(): GeometryScriptCompiler {
+  return typeof Worker === 'undefined' ? compileOnMainThread : compileInSandbox
+}
+
+export function compileGeometryScriptInWorker(
+  input: GeometryScriptCompileInput,
+): Promise<GeometryScriptCompileOutput> {
+  return defaultGeometryScriptCompiler()(input)
 }
