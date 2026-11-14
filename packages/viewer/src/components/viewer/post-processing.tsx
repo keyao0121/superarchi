@@ -51,9 +51,9 @@ import {
   isDaylightAtmosphere as isDaylight,
 } from '../../lib/daylight/look'
 import { daylightRoomContext } from '../../lib/daylight/room-context'
+import { depthGatherSupported } from '../../lib/depth-gather-support'
 import { edgeColorFor, edgeOpacityScaleFor } from '../../lib/edge-style'
 import { PERF_OVERLAY_ENABLED } from '../../lib/gpu-perf'
-import { gtaoSupported } from '../../lib/gtao-support'
 import { createEdgeDepthSampler, inkedEdges } from '../../lib/ink-edges'
 import { refreshIsolation } from '../../lib/isolation'
 import { LayerPassIndex, LayerPassNode } from '../../lib/layer-pass'
@@ -461,7 +461,10 @@ const PostProcessingPasses = ({
     const daylight = isDaylight(atmosphere)
     renderer.toneMapping = daylight ? NeutralToneMapping : ACESFilmicToneMapping
     const aoTier =
-      ambientOcclusion && !perfDisable.ao && renderQuality !== 'low' && gtaoSupported(renderer)
+      ambientOcclusion &&
+      !perfDisable.ao &&
+      renderQuality !== 'low' &&
+      depthGatherSupported(renderer)
         ? renderQuality
         : null
     const temporalAA = !transparentBackground && renderQuality !== 'low'

@@ -11,6 +11,7 @@ import type {
   UnitNode,
   ZoneNode,
 } from '@pascal-app/core'
+import { isAcde } from '@pascal-app/core/platform'
 import type { Object3D } from 'three'
 
 import { create } from 'zustand'
@@ -391,11 +392,19 @@ function provisionalRenderQuality(): RenderQuality {
   return window.matchMedia('(pointer: coarse)').matches ? 'medium' : 'high'
 }
 
-function effectiveRenderQuality(
+/**
+ * The tier a choice renders at. In acde rendering is CPU-bound whatever the GPU (Dopame:
+ * Auto as High ran at 10 FPS, Low at 20), so there `auto` means Low; a picked tier applies
+ * everywhere.
+ */
+export function effectiveRenderQuality(
   choice: RenderQualityChoice,
   detected: RenderQuality | null,
+  acde = isAcde(),
 ): RenderQuality {
-  return choice === 'auto' ? (detected ?? provisionalRenderQuality()) : choice
+  if (choice !== 'auto') return choice
+  if (acde) return 'low'
+  return detected ?? provisionalRenderQuality()
 }
 
 function normalizeLatLng(value: unknown): LatLng | null {
@@ -848,7 +857,7 @@ const useViewer = create<ViewerState>()(
       setWeather: (weather) => set({ weather }),
       deviceLocation: null,
       setDeviceLocation: (deviceLocation) => set({ deviceLocation }),
-      renderQuality: provisionalRenderQuality(),
+      renderQuality: effectiveRenderQuality('auto', null),
       renderQualityChoice: 'auto',
       detectedRenderQuality: null,
       softwareRenderer: false,

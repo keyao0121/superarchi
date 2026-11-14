@@ -1,7 +1,7 @@
 // @ts-expect-error — bun:test is provided by the Bun runtime; viewer does not
 // include Bun ambient types in its production declaration build.
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import useViewer, { groundVeiled, siteGroundShown } from './use-viewer'
+import useViewer, { effectiveRenderQuality, groundVeiled, siteGroundShown } from './use-viewer'
 
 const resetMeasurementPreferences = () => {
   useViewer.setState({
@@ -334,6 +334,49 @@ describe('render quality', () => {
     })
     store.setRenderQuality('auto')
     expect(useViewer.getState().renderQuality).toBe('medium')
+  })
+
+  test('in acde auto is Low whatever was detected; picked tiers still apply', () => {
+    for (const detected of [null, 'low', 'medium', 'high'] as const) {
+      expect(effectiveRenderQuality('auto', detected, true)).toBe('low')
+    }
+    for (const tier of ['low', 'medium', 'high'] as const) {
+      expect(effectiveRenderQuality(tier, 'high', true)).toBe(tier)
+      expect(effectiveRenderQuality(tier, 'low', false)).toBe(tier)
+    }
+  })
+
+  test('outside acde auto still follows the detected tier', () => {
+    for (const detected of ['low', 'medium', 'high'] as const) {
+      expect(effectiveRenderQuality('auto', detected, false)).toBe(detected)
+    }
+    // Before detection, without a window: the provisional High.
+    expect(effectiveRenderQuality('auto', null, false)).toBe('high')
+  })
+
+  test('the store in acde: a High device on auto renders Low until the user picks a tier', () => {
+    const savedAppId = process.env.ACDE_APP_ID
+    // Without a window, isAcde() reads the backend's ACDE_APP_ID.
+    process.env.ACDE_APP_ID = 'pascal-editor'
+    try {
+      const store = useViewer.getState()
+      store.setRenderQuality('auto')
+      store.setDetectedRenderQuality('high')
+      expect(useViewer.getState()).toMatchObject({
+        renderQuality: 'low',
+        renderQualityChoice: 'auto',
+        detectedRenderQuality: 'high',
+      })
+      store.setRenderQuality('medium')
+      expect(useViewer.getState().renderQuality).toBe('medium')
+      store.setRenderQuality('high')
+      expect(useViewer.getState().renderQuality).toBe('high')
+      store.setRenderQuality('auto')
+      expect(useViewer.getState().renderQuality).toBe('low')
+    } finally {
+      if (savedAppId === undefined) delete process.env.ACDE_APP_ID
+      else process.env.ACDE_APP_ID = savedAppId
+    }
   })
 })
 

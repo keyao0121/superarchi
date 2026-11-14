@@ -41,6 +41,7 @@ import { backdropColors, backdropGradient, flatBackdropOutput } from './backdrop
 import { canvasToBlob, createCanvas2D, getContext2D } from './canvas'
 import { DAYLIGHT_INK_BACKDROP, daylightGradeRgb, isDaylightAtmosphere } from './daylight/look'
 import { daylightRoomContext } from './daylight/room-context'
+import { depthGatherSupported } from './depth-gather-support'
 import { type EdgeMode, edgeColorFor, edgeOpacityScaleFor } from './edge-style'
 import { createEdgeDepthSampler, inkedEdges } from './ink-edges'
 import { readbackRows } from './readback-rows'
@@ -219,32 +220,37 @@ export async function createSnapshotPipeline({
 
     const sceneNormal = sample((uv) => unpackRGBToNormal(scenePassNormal.sample(uv)))
 
-    const giPass = ssgi(scenePassColor, scenePassDepth, sceneNormal, camera as any)
-    // A saved still has no later frames to hide the viewport's sampling noise.
-    giPass.sliceCount.value = 3
-    giPass.stepCount.value = 8
-    giPass.radius.value = SSGI_PARAMS.radius
-    giPass.expFactor.value = SSGI_PARAMS.expFactor
-    giPass.thickness.value = SSGI_PARAMS.thickness
-    giPass.backfaceLighting.value = SSGI_PARAMS.backfaceLighting
-    giPass.aoIntensity.value = SSGI_PARAMS.aoIntensity
-    giPass.giIntensity.value = SSGI_PARAMS.giIntensity
-    giPass.useLinearThickness.value = SSGI_PARAMS.useLinearThickness
-    giPass.useScreenSpaceSampling.value = SSGI_PARAMS.useScreenSpaceSampling
-    giPass.useTemporalFiltering = SSGI_PARAMS.useTemporalFiltering
+    // SSGI's AO, where its depth gather compiles; elsewhere the capture keeps the lit colour.
+    let giPass: ReturnType<typeof ssgi> | null = null
+    let ao: any = float(1)
+    if (depthGatherSupported(renderer)) {
+      giPass = ssgi(scenePassColor, scenePassDepth, sceneNormal, camera as any)
+      // A saved still has no later frames to hide the viewport's sampling noise.
+      giPass.sliceCount.value = 3
+      giPass.stepCount.value = 8
+      giPass.radius.value = SSGI_PARAMS.radius
+      giPass.expFactor.value = SSGI_PARAMS.expFactor
+      giPass.thickness.value = SSGI_PARAMS.thickness
+      giPass.backfaceLighting.value = SSGI_PARAMS.backfaceLighting
+      giPass.aoIntensity.value = SSGI_PARAMS.aoIntensity
+      giPass.giIntensity.value = SSGI_PARAMS.giIntensity
+      giPass.useLinearThickness.value = SSGI_PARAMS.useLinearThickness
+      giPass.useScreenSpaceSampling.value = SSGI_PARAMS.useScreenSpaceSampling
+      giPass.useTemporalFiltering = SSGI_PARAMS.useTemporalFiltering
 
-    // r185: SSGI's AO lives in its own single-channel texture (getAONode)
-    // rather than the alpha of one packed rgba texture.
-    const aoTexture = (giPass as any).getAONode()
-    const aoAsRgb = vec4(aoTexture.r, aoTexture.r, aoTexture.r, float(1))
-    const denoisePass = denoise(aoAsRgb, scenePassDepth, sceneNormal, camera)
-    denoisePass.index.value = 0
-    denoisePass.radius.value = 4
+      // r185: SSGI's AO lives in its own single-channel texture (getAONode)
+      // rather than the alpha of one packed rgba texture.
+      const aoTexture = (giPass as any).getAONode()
+      const aoAsRgb = vec4(aoTexture.r, aoTexture.r, aoTexture.r, float(1))
+      const denoisePass = denoise(aoAsRgb, scenePassDepth, sceneNormal, camera)
+      denoisePass.index.value = 0
+      denoisePass.radius.value = 4
 
-    // Same far-field AO fade as the viewport pipeline — without it the
-    // horizon picks up a visible AO line in captures.
-    const aoFarFade = smoothstep(float(0.9994), float(0.9998), sampleEdgeDepth(screenUV))
-    const ao = mix((denoisePass as any).r, float(1), aoFarFade)
+      // Same far-field AO fade as the viewport pipeline — without it the
+      // horizon picks up a visible AO line in captures.
+      const aoFarFade = smoothstep(float(0.9994), float(0.9998), sampleEdgeDepth(screenUV))
+      ao = mix((denoisePass as any).r, float(1), aoFarFade)
+    }
     const aoRgb = scenePassColor.rgb.mul(
       mix(float(1), ao, scenePass.getTextureNode('lighting').r.mul(aoMixUniform)),
     )
@@ -416,7 +422,7 @@ export async function createSnapshotPipeline({
         pipeline.dispose()
         renderTarget.dispose()
         scenePass.dispose()
-        giPass.dispose()
+        giPass?.dispose()
       },
     }
   } catch (error) {
