@@ -427,12 +427,35 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 | 路演视频（86 秒，1080p，字幕 + 背景音乐） | `路演视频/路演视频-最新版.mp4` | ✅ |
 | 展位海报：易拉宝 80×180 cm + 4 张 A3 | `海报/`（矢量 PDF、CMYK、PNG、JPG） | ✅ |
 
-### 本地资料目录
+### 资料目录
+
+代码仓库（`main` 分支是上游代码的快照，`acde` 分支是我们的改动）：
+
+```
+pascal-editor/
+├── docs/
+│   ├── SuperArchi-项目说明.md       本文件
+│   └── dopame-port.zh-CN.md        移植的技术细节、踩过的坑、自进化设计
+├── apps/editor/                    编辑器应用，打包成 Dopame 应用
+│   ├── acde.config.jsonc           Dopame 应用配置
+│   ├── lib/acde/                   Dopame 下的后端环境、语言、页面配置
+│   ├── scripts/acde/               构建前的资源准备、AI 接口入口
+│   ├── lib/agent/                  多 AI 分工的后端
+│   ├── components/agent-panel.tsx  AI 侧边栏（总管、工作表、修改单）
+│   └── e2e/                        在 Dopame 里跑的端到端测试
+├── packages/                       上游的内部包
+│   ├── core/                       模型数据、校验、AI 工具的定义
+│   ├── viewer/                     3D 视图
+│   ├── editor/                     编辑界面、2D 平面图
+│   ├── nodes/                      墙、门窗、家具等各类构件
+│   └── mcp/                        AI 接口（MCP）
+└── scripts/check-acde-compat.ts    拦截 Dopame 不支持的网页功能
+```
+
+仓库之外的资料（不随代码提交）：
 
 ```
 金客松/
-├── SuperArchi-项目说明.md          本文件
-├── pascal-editor/                 上游代码（含完整提交历史）
 ├── Pascal迁移评估.md               移植评估与方案（第 8 节的底稿）
 ├── Dopame-OS-深读与新形态设计.md    Dopame 系统能力深读
 ├── acde与SDK开发流程讲解.md         开发工具入门
