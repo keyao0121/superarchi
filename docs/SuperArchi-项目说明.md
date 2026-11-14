@@ -38,7 +38,7 @@
 | 部分 | 状态 | 说明 |
 | --- | --- | --- |
 | 移植可行性评估 | ✅ | 读完上游源码、Dopame 官方文档（acde 0.0.9）和官方桌面安装包，列出全部不兼容点和改法（第 8 节） |
-| Dopame 运行时能力实测 | ✅ | 在 Mac 版运行时 acdert 0.0.9 上实测：WebAssembly、2D 画布、含中文的 SVG 可用；WebGL 不可用；SVG 内嵌 HTML（foreignObject）不显示。后续在 Linux（RTX 4060）上实测：WebGPU 3D 可渲染；不支持 SVG 的「描边不随缩放变粗」（`vector-effect`） |
+| Dopame 运行时能力实测 | ✅ | 在 Mac 版运行时 acdert 0.0.11 上实测：WebAssembly、2D 画布、含中文的 SVG 可用；WebGL 不可用；SVG 内嵌 HTML（foreignObject）不显示。后续在 Linux（RTX 4060）上实测：WebGPU 3D 可渲染；不支持 SVG 的「描边不随缩放变粗」（`vector-effect`） |
 | 代码移植：打包进 acde，修复不兼容处 | ✅ / 🔧 | 已能打包并安装进 Dopame 运行，3D、2D、项目存取可用，有端到端测试。8.2 的 10 项里 7 项完成、3 项未做，另有 4 项实施中新发现并已解决 |
 | CAD 联动：DXF 底图、嵌入 LibreCAD | ⏳ | 方案见 6、8.4；尚未开始写代码 |
 | 多 AI 分工、接入 Dopame 工作表 | ✅ / ❓ | 多 AI 分工已在应用内实现，并在 Dopame 上用真实模型跑通：总管拆任务，四个 AI 按顺序逐个执行（尚未并行），校核可打回，人验收或撤回；工作表做在应用自己的侧边栏里。接入 Dopame 系统工作表未做（见 8.5）。设计见第 7 节；路演视频里是概念演示 |
@@ -217,11 +217,11 @@ flowchart TB
 | --- | --- |
 | 名称 | Pascal Editor（开源网页版 BIM 编辑器） |
 | 仓库 | <https://github.com/pascalorg/editor> |
-| 版本 | `main` 分支提交 `31642a7`（2026-11-13），对应 `@pascal-app/*` 1.1.4 |
+| 版本 | `main` 分支提交 `559c0d1`（2026-11-14），对应 `@pascal-app/*` 1.1.4 |
 | 协议 | MIT，保留原 LICENSE（Copyright (c) 2026 Pascal Group Inc.） |
 | 知名度 | GitHub 约 2.5 万星（2026-11-14 查看） |
 | 形态 | Next.js 全栈网页应用（带服务器）+ 多包仓库（Turborepo 管理的多个内部包） |
-| 我们的仓库 | fork 自上游，保留全部提交历史 |
+| 我们的仓库 | <https://github.com/chenqihao91/editor>，fork 自上游，保留全部提交历史 |
 
 **为什么选它**
 
@@ -266,7 +266,7 @@ flowchart TB
 
 | 依赖 | 用途 | 协议 | 说明 |
 | --- | --- | --- | --- |
-| `@dopame/acde-api` 0.0.9 | 调用 Dopame 系统能力 | Return AI 提供 | 官方 SDK |
+| `@dopame/acde-api` 0.0.11 | 调用 Dopame 系统能力 | Return AI 提供 | 官方 SDK |
 | dxf-parser | 读 DXF（CAD 图纸） | MIT | 纯网页代码；尚未引入 |
 | @dxfjs/writer | 写 DXF | MIT | 纯网页代码；尚未引入 |
 | LibreCAD | 在应用里打开、修改真实 CAD 图 | GPL-2.0 | 系统里的独立原生程序，通过 `acde:launch` 嵌进窗口，**不打包进应用**；尚未接入 |
@@ -290,11 +290,11 @@ flowchart TB
 
 ## 9. 技术栈
 
-按"盖楼"的顺序，从地基往上排。版本号来自上游 2026-11-13 的代码。
+按"盖楼"的顺序，从地基往上排。版本号来自上游 2026-11-14 的代码。
 
 | 层 | 用什么 | 干什么用 | 来源 |
 | --- | --- | --- | --- |
-| 运行平台 | Dopame OS + 运行时 acdert；开发工具 acde 0.0.9 | 应用跑在哪里 | — |
+| 运行平台 | Dopame OS + 运行时 acdert；开发工具 acde 0.0.11 | 应用跑在哪里 | — |
 | 编程语言 | TypeScript 7 | 带类型检查的 JavaScript | 上游 |
 | 网站框架 | Next.js 16.4 + React 19.3 | 页面加服务器 | 上游 |
 | 界面 | Tailwind CSS 4、Radix UI、lucide 图标、motion 动画 | 按钮、面板、对话框、动效 | 上游 |
@@ -374,7 +374,7 @@ AI 能不能变好，要有客观的标准来判。建筑设计天然有考官�
 
 | 用途 | 机器 | 说明 |
 | --- | --- | --- |
-| 界面和 2D 开发 | Mac + acde 0.0.9 | Mac 版运行时没有 WebGPU 和 WebGL，3D 区域会自动卸下 |
+| 界面和 2D 开发 | Mac + acde 0.0.11 | Mac 版运行时没有 WebGPU 和 WebGL，3D 区域会自动卸下 |
 | 3D、LibreCAD 嵌入验证 | Ubuntu + RTX 4060 + Dopame 镜像 | 先运行 `vulkaninfo --summary` 确认能看到 RTX 4060（Dopame 要求真显卡驱动；虚拟机没做显卡直通则用不上） |
 | 最终运行 | 赛事提供的 Dopame OS 云服务器 | 部署方式以主办方说明为准 |
 
@@ -396,7 +396,7 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 - acde 识别到 Next.js 后会自动打包，把它的服务器当应用后端。
 - 后端设置环境变量 `PASCAL_AUTH=proxy`（见 8.2 第 3 条）。
 - 家具模型先用 gltf-transform 预解压（见 8.2 第 2 条）。
-- 上游要求 Bun 1.4.4，acde 0.0.9 自带的是 Bun 1.4.3，构建时注意。
+- 上游要求 Bun 1.4.4。acde 0.0.11 不自带 Bun，用的是系统里装的那个，要先装好 1.4.4。
 
 ---
 
@@ -420,8 +420,8 @@ acde test                    # 跑端到端测试（*.e2e.ts）
 
 | 交付物 | 位置 | 状态 |
 | --- | --- | --- |
-| 代码仓库（fork 自上游，保留提交历史） | GitHub 地址待填 | 🔧 |
-| Dopame OS 打包产物（纯 JS 包） | `acde build` 生成 | ✅ 已能生成，并安装到 Dopame 运行 |
+| 代码仓库（fork 自上游，保留提交历史） | <https://github.com/chenqihao91/editor> | 🔧 我们的改动在本地 `acde` 分支，尚未推送到该仓库 |
+| Dopame OS 打包产物（纯 JS 包） | `acde build` 生成；已打包为 `super-archi-dopame-package.tar.gz`（不随代码提交） | ✅ 已能生成，并安装到 Dopame 运行 |
 | 路演 PPT | 待补充 | 🔧 |
 | 项目说明（含移植说明） | 本文件 | ✅ |
 | 路演视频（86 秒，1080p，字幕 + 背景音乐） | `路演视频/路演视频-最新版.mp4` | ✅ |

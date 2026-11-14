@@ -67,3 +67,6 @@ apps/editor/public/acde-assets/
 
 # The AI team scene host, bundled by acde:prepare
 apps/editor/agent-host/
+
+# The built Dopame package, handed over as an archive
+dopame-package/
