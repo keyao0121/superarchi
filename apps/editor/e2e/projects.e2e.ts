@@ -6,7 +6,7 @@ import {
   editorGraphViaExport,
   expectHome,
   goto,
-  graphShape,
+  graphContentDiff,
   pageErrors,
   type SceneMeta,
   sceneGraphViaApi,
@@ -113,11 +113,11 @@ test('creates a project, saves an imported scene and reopens it', {
   expect(saved.json?.version).toBeGreaterThan(1)
   const nodeCount = saved.json?.nodeCount ?? 0
   expect(nodeCount).toBeGreaterThan(0)
-  const savedShape = graphShape(await sceneGraphViaApi(window, sceneId))
-  expect(savedShape.nodeIds).toHaveLength(nodeCount)
+  const savedGraph = await sceneGraphViaApi(window, sceneId)
+  expect(Object.keys(savedGraph.nodes)).toHaveLength(nodeCount)
 
   // The editor holds what was saved, read back from its own store.
-  expect(graphShape(await editorGraphViaExport(window, home))).toEqual(savedShape)
+  expect(graphContentDiff(savedGraph, await editorGraphViaExport(window, home))).toEqual([])
 
   // Reopen with a full page load, which reads the scene back from the server.
   // Not `window.reload()`: this page was reached with a client-side push, and
@@ -132,7 +132,7 @@ test('creates a project, saves an imported scene and reopens it', {
   expect(reopened.json?.version).toBe(saved.json?.version)
   // Ready and the title come from load state and metadata; the scene itself
   // must be back in the editor, not just still on the server.
-  expect(graphShape(await editorGraphViaExport(window, home))).toEqual(savedShape)
+  expect(graphContentDiff(savedGraph, await editorGraphViaExport(window, home))).toEqual([])
 
   // And from the list, which shows what was saved.
   await window.getByRole('link', { name: 'All projects' }).click()
