@@ -1,3 +1,4 @@
+import { _api, addCollection } from '@iconify/react'
 import { mintHostPanel, mintPlugin } from '@mint/pascal-plugin'
 import {
   type AnyNodeDefinition,
@@ -19,7 +20,12 @@ import {
 import { treesHostPanel, treesPlugin } from '@pascal-app/plugin-trees'
 import { configureViewer, registerViewerPresentation } from '@pascal-app/viewer'
 import { webXRHostPanel, webXRPlugin } from '@webxr/plugin'
-import { acdeViewerConfig, configureAcdeManifold, shouldLoadWebXR } from './acde/client-config'
+import {
+  acdeViewerConfig,
+  configureAcdeIcons,
+  configureAcdeManifold,
+  shouldLoadWebXR,
+} from './acde/client-config'
 
 configureViewer({
   sfxBaseUrl: '/audios/sfx',
@@ -29,6 +35,7 @@ configureViewer({
   ...acdeViewerConfig(),
 })
 configureAcdeManifold(configureManifoldRuntime)
+configureAcdeIcons({ addCollection, setFetch: _api.setFetch })
 
 // Usage checks (passages, turning circles, flow widths) are off unless the build says so; Next
 // inlines the NEXT_PUBLIC_ mirror of the server's PASCAL_SDF_CHECKS.

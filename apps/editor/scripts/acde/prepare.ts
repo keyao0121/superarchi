@@ -1,17 +1,27 @@
 // Prepares what an acde build needs in `public/acde-assets/` before acde runs
 // `next build` (acde calls the framework directly, so no package-script hook
 // runs). Each step is idempotent and the script exits non-zero on any failure.
-import { copyFile, mkdir, readFile, rename, stat } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { prepareAssets } from './assets'
+import {
+  buildIconSubset,
+  EXEMPT_ICONS,
+  ICON_SUBSET_PATH,
+  iconSetsFrom,
+  iconSourceDirectories,
+  installedIconPrefixes,
+  scanIconNamesIn,
+} from './icons'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const appDirectory = path.resolve(path.dirname(scriptPath), '../..')
 const repositoryRoot = path.resolve(appDirectory, '../..')
 export const acdeAssetsDirectory = path.join(appDirectory, 'public/acde-assets')
 
-export type StepResult = { copied: string[]; unchanged: string[] }
+export type StepResult = { copied: string[]; unchanged: string[]; notes?: string[] }
 
 /** Copies `source` to `target` unless the target already has the same bytes. */
 export async function syncFile(source: string, target: string): Promise<boolean> {
@@ -23,6 +33,17 @@ export async function syncFile(source: string, target: string): Promise<boolean>
   await mkdir(path.dirname(target), { recursive: true })
   const partial = `${target}.partial`
   await copyFile(source, partial)
+  await rename(partial, target)
+  return true
+}
+
+/** Writes `bytes` to `target` unless the target already has them. */
+export async function writeFileIfChanged(target: string, bytes: Buffer): Promise<boolean> {
+  const current = await readFile(target).catch(() => null)
+  if (current?.equals(bytes)) return false
+  await mkdir(path.dirname(target), { recursive: true })
+  const partial = `${target}.partial`
+  await writeFile(partial, bytes)
   await rename(partial, target)
   return true
 }
@@ -48,8 +69,41 @@ export async function stageManifold(): Promise<StepResult> {
   return result
 }
 
+/**
+ * The Iconify icons named in source, from the `@iconify-json/*` devDependencies: acde
+ * cannot reach api.iconify.design (`configureAcdeIcons` in lib/acde/client-config.ts).
+ */
+export async function stageIcons(): Promise<StepResult> {
+  const { names, unresolved } = await scanIconNamesIn(
+    await iconSourceDirectories(repositoryRoot),
+    await installedIconPrefixes(repositoryRoot),
+    repositoryRoot,
+  )
+  const subsets = await buildIconSubset(names, iconSetsFrom(appDirectory))
+  const target = path.join(acdeAssetsDirectory, ICON_SUBSET_PATH)
+  const relative = path.relative(appDirectory, target)
+  const written = await writeFileIfChanged(target, Buffer.from(`${JSON.stringify(subsets)}\n`))
+  const exempt = [...names].filter((name) => name in EXEMPT_ICONS).sort()
+  return {
+    copied: written ? [relative] : [],
+    unchanged: written ? [] : [relative],
+    notes: [
+      `${names.size - exempt.length} icons from ${subsets.map((set) => set.prefix).join(', ')}`,
+      ...exempt.map((name) => `exempt ${name}: ${EXEMPT_ICONS[name]}`),
+      ...(unresolved.length
+        ? [
+            `${unresolved.length} icon positions are not literals, so only names written elsewhere as literals of an installed set are covered:`,
+            ...unresolved.map((location) => `  ${location}`),
+          ]
+        : []),
+    ],
+  }
+}
+
 const steps: { name: string; run: () => Promise<StepResult> }[] = [
   { name: 'manifold', run: stageManifold },
+  { name: 'assets', run: prepareAssets },
+  { name: 'icons', run: stageIcons },
 ]
 
 const isEntryPoint = process.argv[1] !== undefined && path.resolve(process.argv[1]) === scriptPath
@@ -57,11 +111,12 @@ const isEntryPoint = process.argv[1] !== undefined && path.resolve(process.argv[
 if (isEntryPoint) {
   try {
     for (const step of steps) {
-      const { copied, unchanged } = await step.run()
+      const { copied, unchanged, notes = [] } = await step.run()
       console.log(
         `acde:prepare ${step.name}: ${copied.length} copied, ${unchanged.length} unchanged`,
       )
       for (const file of copied) console.log(`  + ${file}`)
+      for (const note of notes) console.log(`  ${note}`)
     }
   } catch (error) {
     console.error(`acde:prepare failed: ${error instanceof Error ? error.message : String(error)}`)

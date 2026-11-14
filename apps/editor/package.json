@@ -10,7 +10,7 @@
     "smoke": "bun scripts/smoke-production-server.ts",
     "lint": "biome lint",
     "check-types": "next typegen && tsc --noEmit",
-    "test": "bun test lib",
+    "test": "bun test lib e2e/graph-content.test.ts",
     "acde:prepare": "bun scripts/acde/prepare.ts",
     "acde:build": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde build",
     "acde:dev": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde dev",

@@ -17,6 +17,7 @@ import * as THREE from 'three'
 import { float, mix, normalView, positionViewDirection } from 'three/tsl'
 import { MeshLambertNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu'
 
+import { acdeTextureSource } from './acde-texture-url'
 import { resolveCdnUrl } from './asset-url'
 import { isKtx2Url, ktx2Loader, whenKtx2Ready } from './ktx2-loader'
 import { getSceneTheme } from './scene-themes'
@@ -130,9 +131,11 @@ export function materialTextureLoadState(): { pending: number; failed: number } 
 
 function loadTexture(url: string, key: string): THREE.Texture {
   pendingTextures.add(key)
+  const acdeSource = acdeTextureSource(url)
   try {
-    return pickTextureLoader(url).load(
-      url,
+    const loader = acdeSource ? textureLoader : pickTextureLoader(url)
+    const texture = loader.load(
+      acdeSource?.url ?? url,
       () => {
         pendingTextures.delete(key)
         failedTextures.delete(key)
@@ -143,6 +146,7 @@ function loadTexture(url: string, key: string): THREE.Texture {
         failedTextures.add(key)
       },
     )
+    return acdeSource ? pinFlipY(texture, acdeSource.flipY) : texture
   } catch (error) {
     pendingTextures.delete(key)
     failedTextures.add(key)
@@ -156,6 +160,14 @@ function pickTextureLoader(url: string): THREE.TextureLoader {
   // KTX2Loader's load/loadAsync are call-compatible with TextureLoader (url →
   // Texture / Promise<Texture>); cast for typing.
   return isKtx2Url(url) ? (ktx2Loader as unknown as THREE.TextureLoader) : textureLoader
+}
+
+// An image standing in for a KTX2 map keeps KTX2's orientation whatever the material's
+// flipY says; userData carries it through applyTextureProperties and clones.
+function pinFlipY(texture: THREE.Texture, flipY: boolean): THREE.Texture {
+  texture.flipY = flipY
+  texture.userData.pascalFlipY = flipY
+  return texture
 }
 const wrapMap = {
   Repeat: THREE.RepeatWrapping,
@@ -307,7 +319,8 @@ function applyTextureProperties(
   texture.wrapT = wrapMap[props.wrapT]
   texture.repeat.set(props.repeatX, props.repeatY)
   texture.rotation = props.rotation
-  texture.flipY = props.flipY
+  const pinnedFlipY = texture.userData.pascalFlipY
+  texture.flipY = typeof pinnedFlipY === 'boolean' ? pinnedFlipY : props.flipY
   texture.updateMatrix()
   texture.channel = getTextureChannel(slot)
   texture.colorSpace = SRGB_TEXTURE_SLOTS.includes(slot ?? 'map')
@@ -393,10 +406,17 @@ async function loadPresetTexture(
   // materials can be created while a capture canvas's renderer is still
   // initializing, and failing here would cache the material permanently
   // texture-less (white).
-  const loadFrom = (url: string) =>
-    isKtx2Url(url)
+  const loadFrom = (url: string) => {
+    const acdeSource = acdeTextureSource(url)
+    if (acdeSource) {
+      return textureLoader
+        .loadAsync(acdeSource.url)
+        .then((texture) => pinFlipY(texture, acdeSource.flipY))
+    }
+    return isKtx2Url(url)
       ? whenKtx2Ready().then(() => (ktx2Loader as unknown as THREE.TextureLoader).loadAsync(url))
       : textureLoader.loadAsync(url)
+  }
   // A catalog map ships in the app's public folder before the asset CDN has it
   // (a branch, a deploy ahead of the CDN): a CDN miss retries the app's own copy.
   const load =

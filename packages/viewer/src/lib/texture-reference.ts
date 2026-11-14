@@ -1,3 +1,4 @@
+import { isAcde } from '@pascal-app/core/platform'
 import type * as THREE from 'three'
 import { getViewerConfig } from './viewer-config'
 
@@ -49,14 +50,15 @@ function pascalStorageOrigin(): string | null {
 
 /** Static catalog materials ship in the app's public dir and resolve through
  *  the assets CDN (`/material/{category}/{slug}/{slug}_{map}_{size}.ktx2`) —
- *  a server-known KTX2 source like the storage buckets, just app-hosted. */
+ *  a server-known KTX2 source like the storage buckets, just app-hosted. In
+ *  acde the base carries the mirror's path (`<origin>/acde-assets`), so the
+ *  catalog lives under it; elsewhere only the base's origin counts, as before. */
 function isAppMaterialUrl(src: string): boolean {
   try {
     const url = new URL(src)
-    return (
-      url.origin === new URL(getViewerConfig().assetsBaseUrl).origin &&
-      url.pathname.startsWith('/material/')
-    )
+    const base = new URL(getViewerConfig().assetsBaseUrl)
+    const catalog = isAcde() ? `${base.pathname.replace(/\/$/, '')}/material/` : '/material/'
+    return url.origin === base.origin && url.pathname.startsWith(catalog)
   } catch {
     return false
   }
