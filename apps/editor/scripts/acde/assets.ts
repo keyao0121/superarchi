@@ -1,9 +1,11 @@
 // The acde asset mirror: every catalog asset the viewer resolves against `assetsBaseUrl`
 // (`/material/…`, `/items/…`), served from `public/acde-assets/` because acde pages cannot
 // reach the assets CDN. Files the app does not ship are downloaded from the CDN at build
-// time, and every `.ktx2` gets a `.webp` beside it (acde has no Worker for KTX2Loader).
+// time, every `.ktx2` gets a `.webp` beside it and Draco GLBs are mirrored decompressed
+// (acde has no Worker for KTX2Loader or DRACOLoader).
 import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
+import { DRACO_EXTENSION, decompressDracoGlb } from './glb-draco'
 import { ktx2ToWebp } from './ktx2-to-webp'
 import { acdeAssetsDirectory, type StepResult, syncFile, writeFileIfChanged } from './prepare'
 
@@ -91,6 +93,17 @@ export function mirrorTarget(assetPath: string): string | null {
   return inside.startsWith('..') || path.isAbsolute(inside) ? null : target
 }
 
+async function usesDraco(glb: string): Promise<boolean> {
+  const bytes = await readFile(glb).catch(() => null)
+  return bytes !== null && workerExtensionsInGlb(new Uint8Array(bytes)).includes(DRACO_EXTENSION)
+}
+
+/** Whether `file` exists and is at least as new as `than`. */
+async function isNewer(file: string, than: string): Promise<boolean> {
+  const [a, b] = await Promise.all([stat(file).catch(() => null), stat(than)])
+  return a !== null && a.mtimeMs >= b.mtimeMs
+}
+
 async function exists(file: string): Promise<boolean> {
   return stat(file).then(
     () => true,
@@ -142,8 +155,12 @@ export async function prepareAssets(
   for (const assetPath of paths) {
     const shipped = path.join(publicDirectory(), assetPath)
     const target = targetOf(assetPath)
-    if (await exists(shipped)) record(target, await syncFile(shipped, target))
-    else if (await exists(target)) record(target, false)
+    if (await exists(shipped)) {
+      // A Draco GLB's mirror copy is its decompressed form, written below.
+      if (!(assetPath.endsWith('.glb') && (await usesDraco(shipped)))) {
+        record(target, await syncFile(shipped, target))
+      }
+    } else if (await exists(target)) record(target, false)
     else toDownload.push(assetPath)
   }
 
@@ -160,15 +177,39 @@ export async function prepareAssets(
 
   const warnings: string[] = []
   let converted = 0
+  let decompressed = 0
   for (const assetPath of paths) {
     const source = targetOf(assetPath)
-    if (!(await exists(source))) continue
     if (assetPath.endsWith('.glb')) {
-      const found = workerExtensionsInGlb(new Uint8Array(await readFile(source)))
-      if (found.length)
-        warnings.push(`${assetPath} uses ${found.join(', ')}: not decodable in acde`)
+      const shipped = path.join(publicDirectory(), assetPath)
+      const from = (await exists(shipped)) ? shipped : source
+      if (!(await exists(from))) continue
+      const bytes = new Uint8Array(await readFile(from))
+      const found = workerExtensionsInGlb(bytes)
+      if (found.includes(DRACO_EXTENSION)) {
+        if (from !== source && (await isNewer(source, from)) && !(await usesDraco(source))) {
+          record(source, false)
+        } else {
+          try {
+            record(
+              source,
+              await writeFileIfChanged(source, Buffer.from(await decompressDracoGlb(bytes))),
+            )
+            decompressed++
+          } catch (error) {
+            failures.push(
+              `decompress ${assetPath}: ${error instanceof Error ? error.message : error}`,
+            )
+          }
+        }
+      }
+      const undecodable = found.filter((name) => name !== DRACO_EXTENSION)
+      if (undecodable.length) {
+        warnings.push(`${assetPath} uses ${undecodable.join(', ')}: not decodable in acde`)
+      }
       continue
     }
+    if (!(await exists(source))) continue
     if (!assetPath.endsWith('.ktx2')) continue
     const webp = source.replace(/\.ktx2$/, '.webp')
     const [ktx2Time, webpTime] = await Promise.all([
@@ -191,7 +232,7 @@ export async function prepareAssets(
   }
 
   result.notes?.push(
-    `${paths.length} catalog paths, ${downloaded.length} downloaded from ${ASSETS_ORIGIN}, ${converted} .ktx2 converted to .webp`,
+    `${paths.length} catalog paths, ${downloaded.length} downloaded from ${ASSETS_ORIGIN}, ${converted} .ktx2 converted to .webp, ${decompressed} Draco .glb decompressed`,
     ...warnings.map((warning) => `warning: ${warning}`),
   )
   if (failures.length) {
