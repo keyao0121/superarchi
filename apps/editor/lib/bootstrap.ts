@@ -19,12 +19,14 @@ import {
 import { treesHostPanel, treesPlugin } from '@pascal-app/plugin-trees'
 import { configureViewer, registerViewerPresentation } from '@pascal-app/viewer'
 import { webXRHostPanel, webXRPlugin } from '@webxr/plugin'
+import { acdeViewerConfig, shouldLoadWebXR } from './acde/client-config'
 
 configureViewer({
   sfxBaseUrl: '/audios/sfx',
   iconsBaseUrl: '/icons',
   assetsBaseUrl: process.env.NEXT_PUBLIC_ASSETS_CDN_URL,
   storageUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  ...acdeViewerConfig(),
 })
 
 // Usage checks (passages, turning circles, flow widths) are off unless the build says so; Next
@@ -138,8 +140,10 @@ extendPluginDiscovery(async () => {
   })
   return [streetscapePlugin]
 })
-extendPluginDiscovery(async () => [webXRPlugin])
-registerEditorHostPanel(webXRHostPanel)
+if (shouldLoadWebXR()) {
+  extendPluginDiscovery(async () => [webXRPlugin])
+  registerEditorHostPanel(webXRHostPanel)
+}
 
 loadBuiltinsSync()
 void loadExternalPlugins()

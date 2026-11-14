@@ -12,6 +12,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { shouldLoadWebXR } from '@/lib/acde/client-config'
 import { webXRWandBindings } from './webxr-wand-bindings'
 
 export type PascalWebXRFeature = ReturnType<typeof usePascalWebXR>
@@ -72,5 +73,6 @@ export function useWebXRFeature() {
 }
 
 export function useWebXRInstalled() {
-  return useScene((state) => state.installedPlugins.includes(WEBXR_PLUGIN_ID))
+  const installed = useScene((state) => state.installedPlugins.includes(WEBXR_PLUGIN_ID))
+  return installed && shouldLoadWebXR()
 }
