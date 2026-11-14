@@ -3,6 +3,7 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { type Camera, type PerspectiveCamera, type Quaternion, Vector3 } from 'three'
+import { attachDragLook, pointerLockSupported } from '../../lib/drag-look'
 import {
   createDroneInput,
   DRONE_SLOW_MULTIPLIER,
@@ -21,7 +22,8 @@ import { applyWalkthroughCameraClipping } from './viewer-camera'
 function requestLock(canvas: HTMLCanvasElement) {
   // The request can reject asynchronously (the browser's re-lock cooldown);
   // clicking the canvas asks again.
-  const result = canvas.requestPointerLock?.() as Promise<void> | undefined
+  if (!pointerLockSupported()) return
+  const result = canvas.requestPointerLock?.() as Promise<void> | undefined // acde-compat: guarded
   if (result && typeof result.catch === 'function') result.catch(() => {})
 }
 
@@ -39,7 +41,8 @@ export type DroneControllerProps = {
 /**
  * The free-flying drone camera for any scene, parametric or baked: no gravity,
  * floor or collision, so it needs no collider. Picks up from the current camera
- * pose. Pointer lock drives look (click the canvas to lock); WASD / arrows move
+ * pose. Pointer lock drives look (click the canvas to lock; without pointer lock,
+ * dragging on the canvas turns the view); WASD / arrows move
  * along the view, Space or E rises, Q or Ctrl sinks, Shift boosts, Alt slows,
  * P frees the cursor (click or P resumes) and Esc leaves.
  */
@@ -112,6 +115,7 @@ export function DroneController({ paused = false, onExit }: DroneControllerProps
   useEffect(() => {
     const canvas = gl.domElement
     const heldKeys = heldKeysRef.current
+    const lockable = pointerLockSupported()
     let wasLocked = false
     const exit = () => (onExitRef.current ?? exitWalkthrough)()
 
@@ -122,14 +126,18 @@ export function DroneController({ paused = false, onExit }: DroneControllerProps
       activeElement.blur()
     }
 
-    const onMouseMove = (event: MouseEvent) => {
-      if (document.pointerLockElement !== canvas || pausedRef.current) return
+    const look = (movementX: number, movementY: number) => {
+      if (pausedRef.current) return
       turnFirstPersonLook(
         lookRef.current,
-        event.movementX,
-        event.movementY,
+        movementX,
+        movementY,
         heldKeys.has('AltLeft') || heldKeys.has('AltRight') ? DRONE_SLOW_MULTIPLIER : 1,
       )
+    }
+    const onMouseMove = (event: MouseEvent) => {
+      if (document.pointerLockElement !== canvas) return
+      look(event.movementX, event.movementY)
     }
     const onClick = () => {
       if (document.pointerLockElement !== canvas) requestLock(canvas)
@@ -181,18 +189,22 @@ export function DroneController({ paused = false, onExit }: DroneControllerProps
       }
     }
 
-    document.addEventListener('mousemove', onMouseMove)
-    canvas.addEventListener('click', onClick)
     document.addEventListener('keydown', onKeyDown, true)
     document.addEventListener('keyup', onKeyUp, true)
     window.addEventListener('blur', onBlur)
-    document.addEventListener('pointerlockchange', onPointerLockChange)
-
-    // The toggle that mounted the drone is a user gesture, so the lock is
-    // usually granted straight away; the canvas click covers a refusal.
-    if (document.pointerLockElement !== canvas) requestLock(canvas)
+    // Without pointer lock nothing ever unlocks, so only Esc leaves.
+    const detachDragLook = lockable ? null : attachDragLook(canvas, { onLook: look })
+    if (lockable) {
+      document.addEventListener('mousemove', onMouseMove)
+      canvas.addEventListener('click', onClick)
+      document.addEventListener('pointerlockchange', onPointerLockChange)
+      // The toggle that mounted the drone is a user gesture, so the lock is
+      // usually granted straight away; the canvas click covers a refusal.
+      if (document.pointerLockElement !== canvas) requestLock(canvas)
+    }
 
     return () => {
+      detachDragLook?.()
       document.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('click', onClick)
       document.removeEventListener('keydown', onKeyDown, true)

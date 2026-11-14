@@ -65,6 +65,7 @@ import {
   Vector3,
 } from 'three'
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh'
+import { attachDragLook, pointerLockSupported } from '../../lib/drag-look'
 import {
   createDroneInput,
   DRONE_SLOW_MULTIPLIER,
@@ -1424,19 +1425,38 @@ function LiveWalkthroughSession({
 
   useEffect(() => {
     const canvas = gl.domElement
-    const handleMouseMove = (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas) return
+    const look = (movementX: number, movementY: number) => {
       // A still render must retain the exact framed pose.
       if (hostRef.current.paused) return
 
       turnFirstPersonLook(
         lookRef.current,
-        e.movementX,
-        e.movementY,
+        movementX,
+        movementY,
         useViewer.getState().walkthroughMovement === 'drone' && droneSlowKeyRef.current
           ? DRONE_SLOW_MULTIPLIER
           : 1,
       )
+    }
+
+    // Without pointer lock (acde): dragging on the canvas looks, a click
+    // without a drag interacts, and nothing unlocks, so only Esc leaves.
+    if (!pointerLockSupported()) {
+      const detachDragLook = attachDragLook(canvas, {
+        onLook: look,
+        onClick: () => {
+          if (hostRef.current.pointerInteraction) toggleInteractableTargetRef.current()
+        },
+      })
+      return () => {
+        detachDragLook()
+        useViewer.getState().setWalkthroughSuspended(false)
+      }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (document.pointerLockElement !== canvas) return
+      look(e.movementX, e.movementY)
     }
 
     const handleClick = (event: MouseEvent) => {
@@ -1444,7 +1464,7 @@ function LiveWalkthroughSession({
       if (!(target instanceof HTMLElement)) return
       if (!canvas.contains(target)) return
       if (document.pointerLockElement !== canvas) {
-        canvas.requestPointerLock?.()
+        canvas.requestPointerLock?.() // acde-compat: guarded
       }
     }
 
@@ -1578,8 +1598,8 @@ function LiveWalkthroughSession({
           suspendRef.current = true
           useViewer.getState().setWalkthroughSuspended(true)
           document.exitPointerLock()
-        } else if (suspendRef.current) {
-          const result = canvas.requestPointerLock?.() as Promise<void> | undefined
+        } else if (suspendRef.current && pointerLockSupported()) {
+          const result = canvas.requestPointerLock?.() as Promise<void> | undefined // acde-compat: guarded
           if (result && typeof result.catch === 'function') result.catch(() => {})
         }
       }
