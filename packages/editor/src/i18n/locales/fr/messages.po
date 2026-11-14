@@ -39325,6 +39325,36 @@ msgstr "Crépuscule"
 msgid "viewer.theme.verdant"
 msgstr "Verdoyant"
 
+# Source-Hash: 8d295590dd53aa90
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "This browser or environment could not initialize WebGPU or WebGL, so Pascal cannot render the 3D scene here. Try opening the editor in a browser with hardware acceleration enabled."
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.browserDetail"
+msgstr "Ce navigateur ou cet environnement n’a pas pu initialiser WebGPU ni WebGL : Pascal ne peut donc pas afficher la scène 3D ici. Essayez d’ouvrir l’éditeur dans un navigateur où l’accélération matérielle est activée."
+
+# Source-Hash: b7d8cf668c282bb0
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "3D view isn’t available on this platform yet. Open this project on Linux or Dopame OS to see it in 3D."
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.platformDetail"
+msgstr "La vue 3D n’est pas encore disponible sur cette plateforme. Ouvrez ce projet sous Linux ou Dopame OS pour le voir en 3D."
+
+# Source-Hash: 98f5d6727e5d6516
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-opus-5-5
+# English: "3D viewer unavailable"
+#: packages/viewer/src/components/viewer/unsupported-gpu-fallback.tsx
+#, fuzzy
+msgid "viewer.unsupportedGpu.title"
+msgstr "Visionneuse 3D indisponible"
+
 # Source-Hash: 892d5dd34372028b
 # Review: human
 # English: "Guides"
