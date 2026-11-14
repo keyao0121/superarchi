@@ -4,7 +4,15 @@ import { usePascalI18n } from '@pascal-app/core'
 import { useEditor } from '@pascal-app/editor'
 import { Eye, Pencil, Share2 } from 'lucide-react'
 import Link from 'next/link'
-import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { PascalMark } from './app-shell'
 import { SharePanel } from './share-panel'
 
@@ -13,10 +21,20 @@ interface EditorNavbarProps {
   name: string
   /** Persists a new project name; resolves once the server has answered. */
   onRename: (name: string) => Promise<void>
+  /** Runs before going back to the project list, which waits for it. */
+  onLeave?: () => Promise<void>
 }
 
-export function EditorNavbar({ sceneId, name, onRename }: EditorNavbarProps) {
+export function EditorNavbar({ sceneId, name, onRename, onLeave }: EditorNavbarProps) {
   const i18n = usePascalI18n()
+  const router = useRouter()
+  const leaveToProjects = onLeave
+    ? (event: MouseEvent<HTMLAnchorElement>) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+        event.preventDefault()
+        void onLeave().then(() => router.push('/'))
+      }
+    : undefined
   const [editing, setEditing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const shareAnchorRef = useRef<HTMLDivElement>(null)
@@ -65,6 +83,7 @@ export function EditorNavbar({ sceneId, name, onRename }: EditorNavbarProps) {
           aria-label={i18n._({ id: 'app.editorNavbar.allProjects', message: 'All projects' })}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent"
           href="/"
+          onClick={leaveToProjects}
           title={i18n._({ id: 'app.editorNavbar.allProjects', message: 'All projects' })}
         >
           <PascalMark />

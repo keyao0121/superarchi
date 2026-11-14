@@ -4,6 +4,7 @@
 // `<ClientBootstrap>` in `app/layout.tsx` — no per-page side-effect
 // import here.
 import { type MessageDescriptor, usePascalI18n } from '@pascal-app/core'
+import { isAcde } from '@pascal-app/core/platform'
 import {
   applySceneGraphToEditor,
   Editor,
@@ -194,7 +195,7 @@ function SceneEditor({ initialScene, meta: initialMeta }: SceneLoaderProps) {
   )
   const vr = useWebXRFeature()
   useLocalArtifactStore()
-  useThumbnailAutosave({ sceneId: meta.id, enabled: true })
+  const thumbnails = useThumbnailAutosave({ sceneId: meta.id, enabled: true })
   const router = useRouter()
   const searchParams = useSearchParams()
   const versionRef = useRef(meta.version)
@@ -360,8 +361,9 @@ function SceneEditor({ initialScene, meta: initialMeta }: SceneLoaderProps) {
         headers: { 'Content-Type': 'image/webp' },
         body: blob,
       }).catch(() => {})
+      thumbnails.captured()
     },
-    [meta.id],
+    [meta.id, thumbnails],
   )
 
   return (
@@ -408,7 +410,14 @@ function SceneEditor({ initialScene, meta: initialMeta }: SceneLoaderProps) {
         disablePostFx={lightPreview}
         immersive={vr?.session ? vr.immersive : undefined}
         layoutVersion="v2"
-        navbarSlot={<EditorNavbar name={meta.name} onRename={handleRename} sceneId={meta.id} />}
+        navbarSlot={
+          <EditorNavbar
+            name={meta.name}
+            onLeave={isAcde() ? thumbnails.leave : undefined}
+            onRename={handleRename}
+            sceneId={meta.id}
+          />
+        }
         onLoad={handleLoad}
         onSave={handleSave}
         onThumbnailCapture={handleThumb}
