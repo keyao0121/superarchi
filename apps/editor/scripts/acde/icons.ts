@@ -15,7 +15,6 @@ export const EXEMPT_ICONS: Record<string, string> = {
   'lucide:barrier': 'not in the Lucide set, so the browser shows nothing either',
   'lucide:scribble': 'not in the Lucide set, so the browser shows nothing either',
   'lucide:steps': 'not in the Lucide set, so the browser shows nothing either',
-  'vaadin:grid': 'no @iconify-json/vaadin yet, so the orthographic grid toggle is blank under acde',
 }
 
 const ICON_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$/

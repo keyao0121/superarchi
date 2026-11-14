@@ -84,6 +84,7 @@
         "@iconify-json/mdi": "^1.2.3",
         "@iconify-json/ph": "^1.2.2",
         "@iconify-json/qlementine-icons": "^1.2.16",
+        "@iconify-json/vaadin": "^1.2.1",
         "@pascal/typescript-config": "*",
         "@types/howler": "^2.2.13",
         "@types/node": "^26.6.6",
@@ -656,6 +657,8 @@
     "@iconify-json/ph": ["@iconify-json/ph@1.2.2", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-PgkEZNtqa8hBGjHXQa4pMwZa93hmfu8FUSjs/nv4oUU6yLsgv+gh9nu28Kqi8Fz9CCVu4hj1MZs9/60J57IzFw=="],
 
     "@iconify-json/qlementine-icons": ["@iconify-json/qlementine-icons@1.2.16", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-fL6KWDEHl6NDP/KyZK8ThnEBXivG2Yi00DKlGyLVyoPsv83/3XODmWTy19tgYHqR0W5NijD5hYMKGJPx9cT8FQ=="],
+
+    "@iconify-json/vaadin": ["@iconify-json/vaadin@1.2.1", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-dT2PWQp5tPxqJsWCc7qXDRVMcGeOf3e+Hys1dcMQrfVVnaRgXxYXgA0Wj98N5QjZMIf9+/iqAKvY1Yuk484hEg=="],
 
     "@iconify/react": ["@iconify/react@6.0.4", "", { "dependencies": { "@iconify/types": "^2.0.0" }, "peerDependencies": { "react": ">=18.0.0" } }, "sha512-7nKd1eF52E1QGIl46eDWfMNPuTQHUxsXoK2Evgtu5jr386jCWTuWFLHM9vfsTNbUcKp+uq6ao+3skNUalDhH/w=="],
 
