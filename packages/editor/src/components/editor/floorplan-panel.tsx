@@ -119,6 +119,10 @@ import {
   getFloorplanWall as getSharedFloorplanWall,
   type FloorplanNodeTransform as SharedFloorplanNodeTransform,
 } from '../../lib/floorplan'
+import {
+  emulateNonScalingStroke,
+  supportsNonScalingStroke,
+} from '../../lib/floorplan/non-scaling-stroke'
 // Site-plan view. Owned under `lib/floorplan/site-plan/**`; this panel
 // only chooses between it and the registry layer, and mounts the switch.
 import {
@@ -4931,6 +4935,16 @@ export function FloorplanPanel({
   const locale = useLocale()
   const viewportHostRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  // The plan's line work is in screen pixels through `vector-effect`, which acdert ignores.
+  const attachSvg = useCallback((svg: SVGSVGElement | null) => {
+    svgRef.current = svg
+    if (!svg || supportsNonScalingStroke()) return
+    const stop = emulateNonScalingStroke(svg)
+    return () => {
+      stop()
+      svgRef.current = null
+    }
+  }, [])
   const floorplanBackgroundRef = useRef<SVGRectElement>(null)
   const floorplanSceneRef = useRef<SVGGElement>(null)
   const floorplanContentRef = useRef<SVGGElement>(null)
@@ -11749,7 +11763,7 @@ export function FloorplanPanel({
             onPointerLeave={handleSvgPointerLeave}
             onPointerMove={handleSvgPointerMove}
             onPointerUp={handleSvgPointerUp}
-            ref={svgRef}
+            ref={attachSvg}
             style={{
               cursor:
                 floorplanNavigationCursor ?? (referenceScaleDraft ? 'crosshair' : EDITOR_CURSOR),

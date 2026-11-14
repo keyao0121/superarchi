@@ -27,7 +27,16 @@ export type Baseline = { entries: BaselineEntry[] }
 
 const guardMarker = 'acde-compat: guarded'
 const scannedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs'])
-const skippedDirectories = new Set(['node_modules', '.next', 'dist', 'build', '.acde', 'scripts'])
+// `agent-host` holds the backend's scene host bundle, which no page loads.
+const skippedDirectories = new Set([
+  'node_modules',
+  '.next',
+  'dist',
+  'build',
+  '.acde',
+  'scripts',
+  'agent-host',
+])
 const testFile = /\.(?:test|e2e)\./
 const remoteSpecifier = /^(?:https?:)?\/\//i
 const webglContext = /^(?:webgl2?|experimental-webgl)$/
