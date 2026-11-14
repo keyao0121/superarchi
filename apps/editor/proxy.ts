@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { acdeSessionLocale } from '@/lib/acde/server-env'
 import { resolveAuthMode, sessionPrincipal } from '@/lib/self-host-auth'
 import { PASCAL_LOCALE_HEADER, resolveUiLocale } from '@/lib/ui-locale'
 
@@ -22,7 +23,10 @@ export function proxy(request: NextRequest) {
   if (gated) return gated
 
   const headers = new Headers(request.headers)
-  headers.set(PASCAL_LOCALE_HEADER, resolveUiLocale(request.nextUrl.searchParams.get('lang')))
+  headers.set(
+    PASCAL_LOCALE_HEADER,
+    resolveUiLocale(request.nextUrl.searchParams.get('lang') ?? acdeSessionLocale(process.env)),
+  )
   return NextResponse.next({ request: { headers } })
 }
 

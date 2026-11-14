@@ -6,7 +6,12 @@ const appDirectory = path.dirname(fileURLToPath(import.meta.url))
 const portableBuild = process.env.PASCAL_PORTABLE_BUILD === '1'
 const nextConfig: NextConfig = {
   ...(portableBuild
-    ? { output: 'standalone' as const, outputFileTracingRoot: path.join(appDirectory, '../..') }
+    ? {
+        output: 'standalone' as const,
+        outputFileTracingRoot: path.join(appDirectory, '../..'),
+        // The AI team's scene host is imported at run time, where no trace sees it.
+        outputFileTracingIncludes: { '/api/scenes/\\[id\\]/agent': ['./agent-host/**/*'] },
+      }
     : {}),
   logging: {
     browserToTerminal: true,

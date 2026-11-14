@@ -43,6 +43,7 @@
       "dependencies": {
         "@iconify/react": "^6.0.4",
         "@mint/pascal-plugin": "github:mintdotgg/mint-pascal-plugin#902c546dbaece6b31455c0dc394afe6b9cd136fe",
+        "@modelcontextprotocol/client": "^2.4.0",
         "@number-flow/react": "^0.6.2",
         "@pascal-app/core": "*",
         "@pascal-app/editor": "*",

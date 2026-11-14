@@ -7,6 +7,162 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.accept"
+msgstr "Accept"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.areas"
+msgstr "Areas"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.board"
+msgstr "Board"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.boss"
+msgstr "Boss"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.applied"
+msgstr "Applied"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.refused"
+msgstr "Refused"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.reverted"
+msgstr "Reverted"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.running"
+msgstr "Working…"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.changes"
+msgstr "Change list"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.doing"
+msgstr "In progress"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.done"
+msgstr "Done"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.review"
+msgstr "To accept"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.todo"
+msgstr "To do"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.check"
+msgstr "Checking employee"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.drawing"
+msgstr "Drawing employee"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.interior"
+msgstr "Interior employee"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.plan"
+msgstr "Plan employee"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.busy"
+msgstr "The team is busy on another project. Try again when it is done."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.failed"
+msgstr "Something went wrong."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.modelFailed"
+msgstr "The model did not answer."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.modelNotConfigured"
+msgstr "Set up a model first: the Boss needs one to work."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.stopped"
+msgstr "Stopped."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.hide"
+msgstr "Hide the AI team"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.modelSettings"
+msgstr "Model settings"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.revert"
+msgstr "Revert"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.say"
+msgstr "Tell the Boss…"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.send"
+msgstr "Send"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.apiKey"
+msgstr "API key"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.apiKeySaved"
+msgstr "Saved. Type a new one to replace it."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.baseUrl"
+msgstr "Base URL"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.failed"
+msgstr "These settings could not be saved."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.intro"
+msgstr "Any OpenAI-compatible chat endpoint works. The key is kept in this app’s private data on this computer."
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.model"
+msgstr "Model"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.save"
+msgstr "Save"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.show"
+msgstr "Show the AI team"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.stop"
+msgstr "Stop"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.task.thinking"
+msgstr "Thinking…"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.team"
+msgstr "AI team"
+
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.working"
+msgstr "AI at work"
+
 #: apps/editor/components/app-home-link.tsx
 msgid "app.appShell.pascalHome"
 msgstr "Pascal home"

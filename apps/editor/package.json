@@ -14,12 +14,14 @@
     "acde:prepare": "bun scripts/acde/prepare.ts",
     "acde:build": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde build",
     "acde:dev": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde dev",
-    "acde:test": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde test --workers 1",
-    "acde:install": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde install"
+    "acde:test": "bun run acde:prepare && LANG=en_US.UTF-8 PASCAL_PORTABLE_BUILD=1 acde test --workers 1",
+    "acde:install": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde install",
+    "acde:mcp": "bun scripts/acde/mcp.ts"
   },
   "dependencies": {
     "@iconify/react": "^6.0.4",
     "@mint/pascal-plugin": "github:mintdotgg/mint-pascal-plugin#902c546dbaece6b31455c0dc394afe6b9cd136fe",
+    "@modelcontextprotocol/client": "^2.4.0",
     "@number-flow/react": "^0.6.2",
     "@pascal-app/core": "*",
     "@pascal-app/editor": "*",

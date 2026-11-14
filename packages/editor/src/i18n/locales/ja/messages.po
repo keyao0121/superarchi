@@ -13,6 +13,396 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+# Source-Hash: 64506f940582f4b3
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Accept"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.accept"
+msgstr "承認"
+
+# Source-Hash: cdd249bb7259375f
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Areas"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.areas"
+msgstr "面積表"
+
+# Source-Hash: 3a642ea0d77e5aae
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Board"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.board"
+msgstr "作業ボード"
+
+# Source-Hash: a90e2a6e178f09ef
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Boss"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.boss"
+msgstr "ボス"
+
+# Source-Hash: 6dcad2cae63de717
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Applied"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.change.applied"
+msgstr "適用済み"
+
+# Source-Hash: 832a7e911382e48e
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Refused"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.change.refused"
+msgstr "拒否"
+
+# Source-Hash: 2d9368bd6ad5d3e9
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Reverted"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.change.reverted"
+msgstr "取り消し済み"
+
+# Source-Hash: 9f76cf67a77e9789
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Working…"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.change.running"
+msgstr "実行中…"
+
+# Source-Hash: 27d2fa59e9fc4437
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Change list"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.changes"
+msgstr "変更リスト"
+
+# Source-Hash: 217d4d83d39a86b4
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "In progress"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.column.doing"
+msgstr "進行中"
+
+# Source-Hash: 16552c2580bbe8b8
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Done"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.column.done"
+msgstr "完了"
+
+# Source-Hash: 4602f040d8c8f581
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "To accept"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.column.review"
+msgstr "承認待ち"
+
+# Source-Hash: 9de922e57a166a5f
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "To do"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.column.todo"
+msgstr "未着手"
+
+# Source-Hash: 4234ea17b01eed60
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Checking employee"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.employee.check"
+msgstr "検査担当"
+
+# Source-Hash: f6f789b02019f0c9
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Drawing employee"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.employee.drawing"
+msgstr "図面担当"
+
+# Source-Hash: d6c08d5e8f1500f6
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Interior employee"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.employee.interior"
+msgstr "インテリア担当"
+
+# Source-Hash: 72d10b08bdd0033d
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Plan employee"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.employee.plan"
+msgstr "間取り担当"
+
+# Source-Hash: 8d8fdee303755e11
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "The team is busy on another project. Try again when it is done."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.error.busy"
+msgstr "チームは別のプロジェクトで作業中です。完了後にもう一度お試しください。"
+
+# Source-Hash: 873ea205890ce6f0
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Something went wrong."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.error.failed"
+msgstr "問題が発生しました。"
+
+# Source-Hash: 7aafc9243bb12643
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "The model did not answer."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.error.modelFailed"
+msgstr "モデルから応答がありませんでした。"
+
+# Source-Hash: 836a7d1552f18c1d
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Set up a model first: the Boss needs one to work."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.error.modelNotConfigured"
+msgstr "先にモデルを設定してください。ボスが働くにはモデルが必要です。"
+
+# Source-Hash: de55916dafc95842
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Stopped."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.error.stopped"
+msgstr "停止しました。"
+
+# Source-Hash: 3dda532f5ac0041a
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Hide the AI team"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.hide"
+msgstr "AI チームを隠す"
+
+# Source-Hash: 1e75645cff2bfb49
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Model settings"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.modelSettings"
+msgstr "モデル設定"
+
+# Source-Hash: d0d4e919bb58a977
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Revert"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.revert"
+msgstr "取り消す"
+
+# Source-Hash: 73e08e04220e0da5
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Tell the Boss…"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.say"
+msgstr "ボスに伝える…"
+
+# Source-Hash: 31d32c960114af1d
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Send"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.send"
+msgstr "送信"
+
+# Source-Hash: 2917ac4eda054c37
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "API key"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.apiKey"
+msgstr "API キー"
+
+# Source-Hash: 2f28b9050910a3a1
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Saved. Type a new one to replace it."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.apiKeySaved"
+msgstr "保存済みです。新しいキーを入力すると置き換えます。"
+
+# Source-Hash: 54103d5686473aca
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Base URL"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.baseUrl"
+msgstr "ベース URL"
+
+# Source-Hash: d545347dae4811ae
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "These settings could not be saved."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.failed"
+msgstr "この設定を保存できませんでした。"
+
+# Source-Hash: 5b3d2fbea03c9985
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Any OpenAI-compatible chat endpoint works. The key is kept in this app’s private data on this computer."
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.intro"
+msgstr "OpenAI 互換のチャットエンドポイントならどれでも使えます。キーはこのコンピューター上の、このアプリ専用のデータに保存されます。"
+
+# Source-Hash: 9c16c09f0c180580
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Model"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.model"
+msgstr "モデル"
+
+# Source-Hash: c1db83d165ed908a
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Save"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.settings.save"
+msgstr "保存"
+
+# Source-Hash: 08020094fe31c024
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Show the AI team"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.show"
+msgstr "AI チームを表示"
+
+# Source-Hash: 4a784e3e95a08715
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Stop"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.stop"
+msgstr "停止"
+
+# Source-Hash: 6b3d668827c1cee9
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "Thinking…"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.task.thinking"
+msgstr "考え中…"
+
+# Source-Hash: 105ee87f32c9ac0d
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "AI team"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.team"
+msgstr "AI チーム"
+
+# Source-Hash: 5c22ad914684b658
+# Review: required
+# AI-Provider: claude-code
+# AI-Model: claude-fable-5-2
+# English: "AI at work"
+#: apps/editor/components/agent-panel.tsx
+#, fuzzy
+msgid "app.agentPanel.working"
+msgstr "AI が作業中"
+
 # Source-Hash: 8ffb1c5066e53a8d
 # Review: required
 # AI-Provider: claude-code

@@ -3,6 +3,23 @@ import path from 'node:path'
 /** Every acde app page has this origin. */
 export const ACDE_ORIGIN = 'http://acde.local'
 
+/** Where the scene database lives inside the app's private folder (`ACDE_APP_DATA`). */
+export function acdeSceneDataDir(appData: string): string {
+  return path.join(appData, 'data')
+}
+
+/**
+ * The language of the acde session the backend runs in, which the runtime
+ * passes on as `LANG` (`zh_CN.UTF-8`), as a locale tag; none outside acde or
+ * for the C locale. The app opens in it unless a page asks for another.
+ */
+export function acdeSessionLocale(env: NodeJS.ProcessEnv): string | null {
+  if (!env.ACDE_APP_ID) return null
+  const language = env.LANG?.split(/[.@]/)[0]
+  if (!language || language === 'C' || language === 'POSIX') return null
+  return language.replace('_', '-')
+}
+
 /**
  * Defaults for a backend started by the acde runtime, which builds the backend's
  * environment from scratch (no `.env`, nothing from the user's shell) and
@@ -21,7 +38,7 @@ export function applyAcdeServerEnv(env: NodeJS.ProcessEnv): void {
   if (!env.ACDE_APP_ID) return
 
   if (!env.PASCAL_DATA_DIR && env.ACDE_APP_DATA) {
-    env.PASCAL_DATA_DIR = path.join(env.ACDE_APP_DATA, 'data')
+    env.PASCAL_DATA_DIR = acdeSceneDataDir(env.ACDE_APP_DATA)
   }
   if (!env.PASCAL_AUTH && !env.PASCAL_ADMIN_PASSWORD) {
     env.PASCAL_AUTH = 'proxy'

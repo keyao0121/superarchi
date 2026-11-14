@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import path from 'node:path'
 import { guardSceneApiRequest } from '../scene-api-security'
 import { resolveAuthMode } from '../self-host-auth'
-import { ACDE_ORIGIN, applyAcdeServerEnv } from './server-env'
+import { ACDE_ORIGIN, acdeSessionLocale, applyAcdeServerEnv } from './server-env'
 
 const acdeEnv = (extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv => ({
   ACDE_APP_ID: 'pascal-editor',
@@ -94,5 +94,20 @@ describe('scene API under acde', () => {
       })
       expect(guardSceneApiRequest(request)).toBeNull()
     }
+  })
+})
+
+describe('acdeSessionLocale', () => {
+  test('reads the session language as a locale tag', () => {
+    expect(acdeSessionLocale(acdeEnv({ LANG: 'zh_CN.UTF-8' }))).toBe('zh-CN')
+    expect(acdeSessionLocale(acdeEnv({ LANG: 'sr_RS@latin' }))).toBe('sr-RS')
+    expect(acdeSessionLocale(acdeEnv({ LANG: 'fr' }))).toBe('fr')
+  })
+
+  test('is none for the C locale, an unset language, or a backend outside acde', () => {
+    expect(acdeSessionLocale(acdeEnv({ LANG: 'C.UTF-8' }))).toBeNull()
+    expect(acdeSessionLocale(acdeEnv({ LANG: 'POSIX' }))).toBeNull()
+    expect(acdeSessionLocale(acdeEnv())).toBeNull()
+    expect(acdeSessionLocale({ LANG: 'zh_CN.UTF-8' })).toBeNull()
   })
 })

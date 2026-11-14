@@ -5,6 +5,8 @@ import { copyFile, mkdir, readFile, rename, stat, writeFile } from 'node:fs/prom
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { SCENE_HOST_BUNDLE } from '../../lib/agent/host-bundle'
+import { bundleSceneHost } from './agent-host'
 import { prepareAssets } from './assets'
 import {
   buildIconSubset,
@@ -100,10 +102,20 @@ export async function stageIcons(): Promise<StepResult> {
   }
 }
 
+/** The MCP server the AI team's backend runs in-process, as its own bundle. */
+export async function stageAgentHost(): Promise<StepResult> {
+  const written = await bundleSceneHost(path.join(appDirectory, SCENE_HOST_BUNDLE))
+  return {
+    copied: written ? [SCENE_HOST_BUNDLE] : [],
+    unchanged: written ? [] : [SCENE_HOST_BUNDLE],
+  }
+}
+
 const steps: { name: string; run: () => Promise<StepResult> }[] = [
   { name: 'manifold', run: stageManifold },
   { name: 'assets', run: prepareAssets },
   { name: 'icons', run: stageIcons },
+  { name: 'agent-host', run: stageAgentHost },
 ]
 
 const isEntryPoint = process.argv[1] !== undefined && path.resolve(process.argv[1]) === scriptPath

@@ -64,3 +64,6 @@ og-test
 .acde/
 apps/editor/public/acde-assets/
 .team/
+
+# The AI team scene host, bundled by acde:prepare
+apps/editor/agent-host/

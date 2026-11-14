@@ -26,6 +26,7 @@ import {
   sceneGraphSignature,
 } from '@/lib/scene-signature'
 import { useThumbnailAutosave } from '@/lib/use-thumbnail-autosave'
+import { AgentPanel, AgentPanelToggle } from './agent-panel'
 import { BuildTab } from './build-tab'
 import { EditorNavbar } from './editor-navbar'
 import { KitchenCommands } from './kitchen-browser'
@@ -208,6 +209,9 @@ function SceneEditor({ initialScene, meta: initialMeta }: SceneLoaderProps) {
   const suppressRemoteSaveUntilRef = useRef(0)
   const [conflict, setConflict] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // The AI team sits beside the editor where the app is the acde one.
+  const agentAvailable = isAcde()
+  const [agentOpen, setAgentOpen] = useState(true)
 
   const lightPreview = isLightPreviewQuery(searchParams)
 
@@ -367,79 +371,85 @@ function SceneEditor({ initialScene, meta: initialMeta }: SceneLoaderProps) {
   )
 
   return (
-    <div className="dark relative h-screen w-screen">
-      {conflict && (
-        <div className="dark pointer-events-auto absolute top-14 left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border border-border bg-background p-4 text-foreground shadow-xl">
-          <h2 className="font-semibold text-sm">
-            {i18n._({
-              id: 'app.sceneLoader.anotherSessionSavedFirstRefresh',
-              message: 'Another session saved first — refresh?',
-            })}
-          </h2>
-          <p className="mt-1 text-muted-foreground text-xs">
-            {i18n._({
-              id: 'app.sceneLoader.yourChangesHavenTBeenSaved',
-              message: "Your changes haven't been saved. Reload to pick up the latest version.",
-            })}
-          </p>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs hover:bg-primary/90"
-              onClick={() => router.refresh()}
-              type="button"
-            >
-              {i18n._({ id: 'app.sceneLoader.reload', message: 'Reload' })}
-            </button>
-            <button
-              className="rounded-lg border border-border px-3 py-1.5 font-medium text-xs hover:bg-accent"
-              onClick={() => setConflict(false)}
-              type="button"
-            >
-              {i18n._({ id: 'app.sceneLoader.dismiss', message: 'Dismiss' })}
-            </button>
+    <div className="dark flex h-screen w-screen">
+      <div className="relative h-full min-w-0 flex-1">
+        {conflict && (
+          <div className="dark pointer-events-auto absolute top-14 left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border border-border bg-background p-4 text-foreground shadow-xl">
+            <h2 className="font-semibold text-sm">
+              {i18n._({
+                id: 'app.sceneLoader.anotherSessionSavedFirstRefresh',
+                message: 'Another session saved first — refresh?',
+              })}
+            </h2>
+            <p className="mt-1 text-muted-foreground text-xs">
+              {i18n._({
+                id: 'app.sceneLoader.yourChangesHavenTBeenSaved',
+                message: "Your changes haven't been saved. Reload to pick up the latest version.",
+              })}
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs hover:bg-primary/90"
+                onClick={() => router.refresh()}
+                type="button"
+              >
+                {i18n._({ id: 'app.sceneLoader.reload', message: 'Reload' })}
+              </button>
+              <button
+                className="rounded-lg border border-border px-3 py-1.5 font-medium text-xs hover:bg-accent"
+                onClick={() => setConflict(false)}
+                type="button"
+              >
+                {i18n._({ id: 'app.sceneLoader.dismiss', message: 'Dismiss' })}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+        {saveError && !conflict && (
+          <div className="dark pointer-events-auto absolute top-14 left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border border-destructive/50 bg-background px-4 py-2 text-center shadow-xl">
+            <p className="font-medium text-destructive text-xs">{saveError}</p>
+          </div>
+        )}
+        <KitchenCommands />
+        <Editor
+          disablePostFx={lightPreview}
+          immersive={vr?.session ? vr.immersive : undefined}
+          layoutVersion="v2"
+          navbarSlot={
+            <EditorNavbar
+              name={meta.name}
+              onLeave={isAcde() ? thumbnails.leave : undefined}
+              onRename={handleRename}
+              sceneId={meta.id}
+            />
+          }
+          onLoad={handleLoad}
+          onSave={handleSave}
+          onThumbnailCapture={handleThumb}
+          projectId={meta.projectId ?? 'default'}
+          projectName={meta.name}
+          sidebarTabs={sidebarTabs}
+          viewerBanner={<PoolSectionBanner />}
+          viewerToolbarLeft={<EditorViewerToolbarLeft />}
+          viewerToolbarRight={
+            <EditorViewerToolbarRight
+              vrButton={
+                vr ? (
+                  <PascalWebXRButton
+                    className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:bg-accent disabled:opacity-50"
+                    feature={vr}
+                  />
+                ) : null
+              }
+              vrLabel="Enter VR"
+            />
+          }
+        />
+        {agentAvailable && !agentOpen && <AgentPanelToggle onOpen={() => setAgentOpen(true)} />}
+      </div>
+      {agentAvailable && agentOpen && (
+        <AgentPanel onClose={() => setAgentOpen(false)} sceneId={meta.id} />
       )}
-      {saveError && !conflict && (
-        <div className="dark pointer-events-auto absolute top-14 left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border border-destructive/50 bg-background px-4 py-2 text-center shadow-xl">
-          <p className="font-medium text-destructive text-xs">{saveError}</p>
-        </div>
-      )}
-      <KitchenCommands />
-      <Editor
-        disablePostFx={lightPreview}
-        immersive={vr?.session ? vr.immersive : undefined}
-        layoutVersion="v2"
-        navbarSlot={
-          <EditorNavbar
-            name={meta.name}
-            onLeave={isAcde() ? thumbnails.leave : undefined}
-            onRename={handleRename}
-            sceneId={meta.id}
-          />
-        }
-        onLoad={handleLoad}
-        onSave={handleSave}
-        onThumbnailCapture={handleThumb}
-        projectId={meta.projectId ?? 'default'}
-        projectName={meta.name}
-        sidebarTabs={sidebarTabs}
-        viewerBanner={<PoolSectionBanner />}
-        viewerToolbarLeft={<EditorViewerToolbarLeft />}
-        viewerToolbarRight={
-          <EditorViewerToolbarRight
-            vrButton={
-              vr ? (
-                <PascalWebXRButton
-                  className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:bg-accent disabled:opacity-50"
-                  feature={vr}
-                />
-              ) : null
-            }
-            vrLabel="Enter VR"
-          />
-        }
-      />
     </div>
   )
 }

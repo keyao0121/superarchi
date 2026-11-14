@@ -13,6 +13,279 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+# Source-Hash: 64506f940582f4b3
+# Review: human
+# English: "Accept"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.accept"
+msgstr "验收通过"
+
+# Source-Hash: cdd249bb7259375f
+# Review: human
+# English: "Areas"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.areas"
+msgstr "面积表"
+
+# Source-Hash: 3a642ea0d77e5aae
+# Review: human
+# English: "Board"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.board"
+msgstr "工作表"
+
+# Source-Hash: a90e2a6e178f09ef
+# Review: human
+# English: "Boss"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.boss"
+msgstr "总管"
+
+# Source-Hash: 6dcad2cae63de717
+# Review: human
+# English: "Applied"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.applied"
+msgstr "已执行"
+
+# Source-Hash: 832a7e911382e48e
+# Review: human
+# English: "Refused"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.refused"
+msgstr "被拒绝"
+
+# Source-Hash: 2d9368bd6ad5d3e9
+# Review: human
+# English: "Reverted"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.reverted"
+msgstr "已撤回"
+
+# Source-Hash: 9f76cf67a77e9789
+# Review: human
+# English: "Working…"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.change.running"
+msgstr "执行中…"
+
+# Source-Hash: 27d2fa59e9fc4437
+# Review: human
+# English: "Change list"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.changes"
+msgstr "修改单"
+
+# Source-Hash: 217d4d83d39a86b4
+# Review: human
+# English: "In progress"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.doing"
+msgstr "进行中"
+
+# Source-Hash: 16552c2580bbe8b8
+# Review: human
+# English: "Done"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.done"
+msgstr "完成"
+
+# Source-Hash: 4602f040d8c8f581
+# Review: human
+# English: "To accept"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.review"
+msgstr "待验收"
+
+# Source-Hash: 9de922e57a166a5f
+# Review: human
+# English: "To do"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.column.todo"
+msgstr "待办"
+
+# Source-Hash: 4234ea17b01eed60
+# Review: human
+# English: "Checking employee"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.check"
+msgstr "校核员工"
+
+# Source-Hash: f6f789b02019f0c9
+# Review: human
+# English: "Drawing employee"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.drawing"
+msgstr "出图员工"
+
+# Source-Hash: d6c08d5e8f1500f6
+# Review: human
+# English: "Interior employee"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.interior"
+msgstr "室内员工"
+
+# Source-Hash: 72d10b08bdd0033d
+# Review: human
+# English: "Plan employee"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.employee.plan"
+msgstr "平面员工"
+
+# Source-Hash: 8d8fdee303755e11
+# Review: human
+# English: "The team is busy on another project. Try again when it is done."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.busy"
+msgstr "团队正在处理另一个项目，等它完成后再试。"
+
+# Source-Hash: 873ea205890ce6f0
+# Review: human
+# English: "Something went wrong."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.failed"
+msgstr "出了点问题。"
+
+# Source-Hash: 7aafc9243bb12643
+# Review: human
+# English: "The model did not answer."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.modelFailed"
+msgstr "模型没有回应。"
+
+# Source-Hash: 836a7d1552f18c1d
+# Review: human
+# English: "Set up a model first: the Boss needs one to work."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.modelNotConfigured"
+msgstr "请先设置模型：总管需要模型才能工作。"
+
+# Source-Hash: de55916dafc95842
+# Review: human
+# English: "Stopped."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.error.stopped"
+msgstr "已停止。"
+
+# Source-Hash: 3dda532f5ac0041a
+# Review: human
+# English: "Hide the AI team"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.hide"
+msgstr "收起 AI 团队"
+
+# Source-Hash: 1e75645cff2bfb49
+# Review: human
+# English: "Model settings"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.modelSettings"
+msgstr "模型设置"
+
+# Source-Hash: d0d4e919bb58a977
+# Review: human
+# English: "Revert"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.revert"
+msgstr "撤回"
+
+# Source-Hash: 73e08e04220e0da5
+# Review: human
+# English: "Tell the Boss…"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.say"
+msgstr "跟总管说…"
+
+# Source-Hash: 31d32c960114af1d
+# Review: human
+# English: "Send"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.send"
+msgstr "发送"
+
+# Source-Hash: 2917ac4eda054c37
+# Review: human
+# English: "API key"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.apiKey"
+msgstr "API 密钥"
+
+# Source-Hash: 2f28b9050910a3a1
+# Review: human
+# English: "Saved. Type a new one to replace it."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.apiKeySaved"
+msgstr "已保存。输入新的可替换。"
+
+# Source-Hash: 54103d5686473aca
+# Review: human
+# English: "Base URL"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.baseUrl"
+msgstr "接口地址"
+
+# Source-Hash: d545347dae4811ae
+# Review: human
+# English: "These settings could not be saved."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.failed"
+msgstr "这些设置无法保存。"
+
+# Source-Hash: 5b3d2fbea03c9985
+# Review: human
+# English: "Any OpenAI-compatible chat endpoint works. The key is kept in this app’s private data on this computer."
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.intro"
+msgstr "任何兼容 OpenAI 的对话接口都可以。密钥保存在本机上此应用的私有数据中。"
+
+# Source-Hash: 9c16c09f0c180580
+# Review: human
+# English: "Model"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.model"
+msgstr "模型"
+
+# Source-Hash: c1db83d165ed908a
+# Review: human
+# English: "Save"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.settings.save"
+msgstr "保存"
+
+# Source-Hash: 08020094fe31c024
+# Review: human
+# English: "Show the AI team"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.show"
+msgstr "显示 AI 团队"
+
+# Source-Hash: 4a784e3e95a08715
+# Review: human
+# English: "Stop"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.stop"
+msgstr "停止"
+
+# Source-Hash: 6b3d668827c1cee9
+# Review: human
+# English: "Thinking…"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.task.thinking"
+msgstr "思考中…"
+
+# Source-Hash: 105ee87f32c9ac0d
+# Review: human
+# English: "AI team"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.team"
+msgstr "AI 团队"
+
+# Source-Hash: 5c22ad914684b658
+# Review: human
+# English: "AI at work"
+#: apps/editor/components/agent-panel.tsx
+msgid "app.agentPanel.working"
+msgstr "AI 协作中"
+
 # Source-Hash: 8ffb1c5066e53a8d
 # Review: required
 # AI-Provider: claude-code
