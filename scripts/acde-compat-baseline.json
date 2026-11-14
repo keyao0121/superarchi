@@ -1,21 +1,6 @@
 {
   "entries": [
     {
-      "file": "apps/editor/components/embed-viewer.tsx",
-      "rule": "request-pointer-lock",
-      "count": 1
-    },
-    {
-      "file": "apps/editor/components/viewer-toolbar.tsx",
-      "rule": "request-pointer-lock",
-      "count": 1
-    },
-    {
-      "file": "packages/editor/src/lib/walkthrough-pointer-lock.ts",
-      "rule": "request-pointer-lock",
-      "count": 2
-    },
-    {
       "file": "packages/mcp/src/tools/author-scene.ts",
       "rule": "crypto-subtle",
       "count": 1

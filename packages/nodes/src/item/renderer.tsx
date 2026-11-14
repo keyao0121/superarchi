@@ -29,6 +29,7 @@ import {
   ErrorBoundary,
   getViewerConfig,
   glassMaterial,
+  hasWebWorker,
   materialCastsShadow,
   NodeRenderer,
   type RenderShading,
@@ -36,6 +37,7 @@ import {
   resolveMaterialRef,
   ScriptedClips,
   stampPascalTextureRef,
+  unavailableDracoLoader,
   useClipActions,
   useItemLightPool,
   useNodeEvents,
@@ -233,8 +235,12 @@ const BrokenItemFallback = ({ node, events = true }: { node: ItemNode; events?: 
 
 let itemDracoLoader: DRACOLoader | null = null
 
-const configureItemModelLoader = (loader: ItemGLTFLoader, renderer: unknown) => {
+export const configureItemModelLoader = (loader: ItemGLTFLoader, renderer: unknown) => {
   configureKtx2Support(loader, renderer)
+  if (!hasWebWorker()) {
+    loader.setDRACOLoader(unavailableDracoLoader as unknown as DRACOLoader)
+    return
+  }
   if (!itemDracoLoader) {
     itemDracoLoader = new DRACOLoader(loader.manager)
   }
