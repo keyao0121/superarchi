@@ -2,6 +2,7 @@ import type { GeometryScriptParamValue } from '@pascal-app/core'
 import { sdfChecksOn } from '@pascal-app/core/usage-field'
 import type { GeometryScriptCompileOutput } from '@pascal-app/geometry-script'
 import { sha256Hex } from '@pascal-app/geometry-script/sha256'
+import { compileGeometryScriptOnMainThread } from './main-thread'
 import type { GeometryScriptWorkerRequest, GeometryScriptWorkerResponse } from './protocol'
 
 const COMPILE_TIMEOUT_MS = 20_000
@@ -19,6 +20,7 @@ addEventListener('message', (event) => {
   if (event.source !== parent) return
   const data = event.data
   if (data && data.type === 'start') {
+    // acde-compat: guarded (the frame starts only where Worker exists; see compileGeometryScriptInWorker)
     worker = new Worker(URL.createObjectURL(new Blob([data.source], { type: 'text/javascript' })))
     worker.onmessage = (e) => parent.postMessage(e.data, '*', e.data && e.data.output ? [e.data.output.glb] : [])
     worker.onerror = (e) => parent.postMessage({ crashed: e.message || 'The compile worker crashed' }, '*')
@@ -138,6 +140,8 @@ function startSandbox(): Promise<Window> {
 /**
  * Runs a geometry script in the sandbox and returns its GLB + manifest. A
  * script that hangs is stopped with its sandbox; the next compile starts fresh.
+ * Without Web Workers (acde) it compiles on this thread instead; the hashes are
+ * still set here either way.
  */
 export async function compileGeometryScriptInWorker(input: {
   code: string
@@ -145,6 +149,10 @@ export async function compileGeometryScriptInWorker(input: {
   /** What the host builds it for (a room's floor), in the host's frame. */
   inputs?: Record<string, unknown>
 }): Promise<GeometryScriptCompileOutput> {
+  if (typeof Worker === 'undefined') {
+    const output = await compileGeometryScriptOnMainThread(input, COMPILE_TIMEOUT_MS)
+    return withOwnHashes(output, input.code)
+  }
   const target = await startSandbox()
   const id = nextId++
   const request: GeometryScriptWorkerRequest = {

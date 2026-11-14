@@ -7,30 +7,13 @@
 // below is defence in depth on top of that boundary.
 
 import './sandbox-window'
-import { compileGeometryScript } from './compile'
+import { compileGeometryScript, SANDBOX_BLOCKED_GLOBALS } from './compile'
 
 const scope = globalThis as unknown as Record<string, unknown>
 
-const BLOCKED = [
-  'fetch',
-  'XMLHttpRequest',
-  'WebSocket',
-  'WebTransport',
-  'EventSource',
-  'importScripts',
-  'indexedDB',
-  'caches',
-  'Worker',
-  'SharedWorker',
-  'BroadcastChannel',
-  'Request',
-  'Response',
-  'FontFace',
-] as const
-
 const post = self.postMessage.bind(self)
 
-for (const name of BLOCKED) {
+for (const name of SANDBOX_BLOCKED_GLOBALS) {
   for (let target: object | null = scope; target; target = Object.getPrototypeOf(target)) {
     if (Object.hasOwn(target, name)) {
       try {

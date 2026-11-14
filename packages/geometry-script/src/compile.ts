@@ -42,6 +42,12 @@ export type GeometryScriptCompileInput = {
   inputs?: Record<string, unknown>
   /** Also write the manifest's `shape`: what the build occupies in plan at each height, for the usage checks. */
   usageShape?: boolean
+  /**
+   * The script runs on the host's own thread instead of the sandbox worker (acde has no Web
+   * Workers): evaluate it in strict mode with the ambient capabilities shadowed. A deterrent, not
+   * an isolation boundary.
+   */
+  shadowGlobals?: boolean
 }
 
 export type GeometryScriptCompileOutput = CompiledGeometryScript & { glb: ArrayBuffer }
@@ -1119,6 +1125,44 @@ export async function finishBuild({
   }
 }
 
+/** Ambient capabilities a geometry script must not reach: the sandbox worker removes them. */
+export const SANDBOX_BLOCKED_GLOBALS = [
+  'fetch',
+  'XMLHttpRequest',
+  'WebSocket',
+  'WebTransport',
+  'EventSource',
+  'importScripts',
+  'indexedDB',
+  'caches',
+  'Worker',
+  'SharedWorker',
+  'BroadcastChannel',
+  'Request',
+  'Response',
+  'FontFace',
+] as const
+
+/** On the host's thread the page itself is in reach too: these are shadowed as well. */
+const HOST_THREAD_SHADOWED = [
+  ...SANDBOX_BLOCKED_GLOBALS,
+  'window',
+  'self',
+  'globalThis',
+  'document',
+  'parent',
+  'top',
+  'frames',
+  'opener',
+  'location',
+  'navigator',
+  'localStorage',
+  'sessionStorage',
+  'cookieStore',
+  'open',
+  'postMessage',
+] as const
+
 // A deterrent, not the isolation boundary: hosts run this in a locked-down worker or process.
 export const SOURCE_GUARD =
   /\bimport\s*\(|\beval\s*\(|\bFunction\s*\(|\.constructor\s*\(|\bprocess\b|\brequire\s*\(/
@@ -1140,7 +1184,16 @@ export async function compileGeometryScript(
   }
   const body = transformModule(input.code, MODULES)
   // Evaluating the model's module is the compiler's job; callers run it in a locked-down worker.
-  const factory = new Function('__modules', 'THREE', 'lib', body) as (
+  // Off the worker, the shadowing parameters stay undefined and strict mode keeps `this` from
+  // handing out the global object (the script was an ES module, which is strict anyway).
+  const shadowed = input.shadowGlobals ? HOST_THREAD_SHADOWED : []
+  const factory = new Function(
+    '__modules',
+    'THREE',
+    'lib',
+    ...shadowed,
+    input.shadowGlobals ? `'use strict';\n${body}` : body,
+  ) as (
     modules: ModuleTable,
     three: typeof THREE,
     lib: typeof LIB,
