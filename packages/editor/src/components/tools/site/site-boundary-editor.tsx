@@ -1,5 +1,5 @@
 import { emitter, type SiteNode, useLiveNodeOverrides, useScene } from '@pascal-app/core'
-import { SCENE_LAYER } from '@pascal-app/viewer'
+import { hasWebWorker, SCENE_LAYER, warnDracoUnavailable } from '@pascal-app/viewer'
 import { useGLTF } from '@react-three/drei/core/Gltf'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -54,17 +54,30 @@ type TintableMaterial = {
   transparent: boolean
 }
 
-function SiteFlagModel({
-  active,
-  hovered,
-  opacity = 1,
-  scale = SITE_FLAG_SCALE,
-}: {
+type SiteFlagModelProps = {
   active: boolean
   hovered: boolean
   opacity?: number
   scale?: number
-}) {
+}
+
+// The flag GLB is Draco-compressed, and Draco decodes in Web Workers: without them (acde)
+// the flag stays the simple shape shown while the model loads.
+function SiteFlagModel(props: SiteFlagModelProps) {
+  const supported = hasWebWorker()
+  useEffect(() => {
+    if (!supported) warnDracoUnavailable('site flag: drawn as its simple fallback')
+  }, [supported])
+  if (supported) return <DracoSiteFlagModel {...props} />
+  return <SiteFlagFallback active={props.active} hovered={props.hovered} opacity={props.opacity} />
+}
+
+function DracoSiteFlagModel({
+  active,
+  hovered,
+  opacity = 1,
+  scale = SITE_FLAG_SCALE,
+}: SiteFlagModelProps) {
   const { scene } = useGLTF(SITE_FLAG_MODEL_URL, true)
   const modelRef = useRef<Object3D>(null)
   const flagScene = useMemo(() => {

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { sha256Hex } from '@pascal-app/geometry-script/sha256'
 import { compileGeometryScriptInWorker } from './client'
+import { compileGeometryScriptOnMainThread } from './main-thread'
 
 const BOX = `
 import * as THREE from 'three'
@@ -52,5 +53,18 @@ describe('compileGeometryScriptInWorker without Web Workers (acde)', () => {
     await expect(
       compileGeometryScriptInWorker({ code: 'export default () => eval("1")' }),
     ).rejects.toThrow('cannot use dynamic import, eval')
+  })
+})
+
+describe('compileGeometryScriptOnMainThread', () => {
+  test('a timeout reports that it stopped waiting, not that the script stopped', async () => {
+    const HANGS = `
+export default async function build() {
+  await new Promise(() => {})
+}
+`
+    await expect(compileGeometryScriptOnMainThread({ code: HANGS }, 50)).rejects.toThrow(
+      'Timed out after 0.05 s waiting for the script; it may still be running',
+    )
   })
 })

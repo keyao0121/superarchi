@@ -145,6 +145,14 @@ export {
 export type { DisplayState } from './lib/display-state'
 export { disposeObject3DResources } from './lib/dispose-object3d'
 export {
+  DracoUnavailableError,
+  dracoDecoderPath,
+  hasWebWorker,
+  unavailableDracoLoader,
+  warnDracoUnavailable,
+} from './lib/draco-support'
+export { pointerLockSupported } from './lib/drag-look'
+export {
   createDroneInput,
   DRONE_SLOW_MULTIPLIER,
   type DroneInput,

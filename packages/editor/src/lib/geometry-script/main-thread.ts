@@ -20,7 +20,12 @@ export async function compileGeometryScriptOnMainThread(
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new Error(`The script ran longer than ${timeoutMs / 1000} s and was stopped`)),
+      () =>
+        reject(
+          new Error(
+            `Timed out after ${timeoutMs / 1000} s waiting for the script; it may still be running`,
+          ),
+        ),
       timeoutMs,
     )
   })

@@ -17,7 +17,13 @@ import {
   type ViewerStageMode,
   WalkthroughHud,
 } from '@pascal-app/editor'
-import { InteractiveSystem, SceneEnvironment, useViewer, Viewer } from '@pascal-app/viewer'
+import {
+  InteractiveSystem,
+  pointerLockSupported,
+  SceneEnvironment,
+  useViewer,
+  Viewer,
+} from '@pascal-app/viewer'
 import Image from 'next/image'
 import { Component, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -208,16 +214,16 @@ function EmbedWalkthroughHud() {
 /**
  * Lock the pointer on the 3D canvas inside the walkthrough click, as Preview
  * does. A refused lock (the browser's re-lock cooldown) is fine: clicking the
- * canvas locks it.
+ * canvas locks it. Without pointer lock (acde) the canvas is only focused.
  */
 function requestWalkthroughPointerLock() {
   const canvas = document.querySelector<HTMLCanvasElement>('[data-pascal-viewer-3d] canvas')
   if (!canvas) return
   if (!canvas.hasAttribute('tabindex')) canvas.tabIndex = -1
   canvas.focus({ preventScroll: true })
-  if (document.pointerLockElement === canvas) return
+  if (!pointerLockSupported() || document.pointerLockElement === canvas) return
   try {
-    const result = canvas.requestPointerLock?.() as Promise<void> | undefined
+    const result = canvas.requestPointerLock?.() as Promise<void> | undefined // acde-compat: guarded
     result?.catch?.(() => {})
   } catch {
     // Clicking the canvas still locks.

@@ -1,7 +1,7 @@
 'use client'
 
 import { emitter, type SnapshotSavedEvent } from '@pascal-app/core'
-import { isTypingTarget, SNAPSHOT_MAX_EDGE } from '@pascal-app/viewer'
+import { isTypingTarget, pointerLockSupported, SNAPSHOT_MAX_EDGE } from '@pascal-app/viewer'
 import { useFirstPersonHud, useIsMobile, WalkthroughCrosshair } from '@pascal-app/viewer/ui'
 import {
   Check,
@@ -476,16 +476,19 @@ export function SnapshotCaptureOverlay({ projectId }: { projectId: string }) {
   // While walk / drone hold the pointer lock, the wheel drives the lens and a
   // click fires the shutter. Both gate on the lock being HELD: the click that
   // acquires it happens unlocked, so entering the camera never also shoots,
-  // and an unlocked wheel keeps scrolling whatever pane it's over.
+  // and an unlocked wheel keeps scrolling whatever pane it's over. Without
+  // pointer lock (acde) the wheel drives the lens while over the canvas, and
+  // a click turns or interacts instead of shooting: Enter is the shutter.
   useEffect(() => {
     if (!isCaptureMode || cameraNav === 'orbit') return
     const canvas = document.querySelector<HTMLCanvasElement>('[data-pascal-viewer-3d] canvas')
     if (!canvas) return
+    const lockable = pointerLockSupported()
     // `setCaptureFov` rounds to whole degrees; accumulate sub-degree trackpad
     // deltas so slow scrolls still move the lens.
     let pendingFovDelta = 0
     const onWheel = (e: WheelEvent) => {
-      if (document.pointerLockElement !== canvas) return
+      if (lockable ? document.pointerLockElement !== canvas : e.target !== canvas) return
       e.preventDefault()
       const pixels = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY
       // Wheel-up narrows the lens (zoom in), matching the orbit dolly.

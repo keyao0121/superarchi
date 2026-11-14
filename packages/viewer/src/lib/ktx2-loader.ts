@@ -10,6 +10,7 @@ import {
 // LottieLoader/TTFLoader, whose CDN URL imports (`lottie-web`, `opentype.js`)
 // crash bun's test runtime for every consumer of the viewer barrel.
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
+import { hasWebWorker } from './draco-support'
 import { getViewerConfig } from './viewer-config'
 
 /** The private KTX2Loader surface this module relies on (stable across three
@@ -186,8 +187,23 @@ export function whenKtx2Ready(): Promise<void> {
   return ktx2ReadyPromise
 }
 
-/** Returns true once support has been detected for this renderer (KTX2 safe to load). */
+let warnedNoWorker = false
+
+/**
+ * Returns true once support has been detected for this renderer (KTX2 safe to load). Never
+ * without Web Workers (acde): KTX2Loader fetches its transcoder (jsdelivr by default) and
+ * transcodes in Workers, so `.ktx2` loads keep waiting and GLTFs get no KTX2 loader.
+ */
 export function ensureKtx2Support(renderer: unknown): boolean {
+  if (!hasWebWorker()) {
+    if (!warnedNoWorker) {
+      warnedNoWorker = true
+      console.warn(
+        '[viewer] KTX2 textures cannot be transcoded here: this runtime has no Web Worker. They are not loaded.',
+      )
+    }
+    return false
+  }
   ktx2Loader.setTranscoderPath(getViewerConfig().decoders.basisPath)
   const key = renderer as object | null
   if (!key) return false

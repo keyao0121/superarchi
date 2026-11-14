@@ -26,7 +26,13 @@ import {
   useWallsBelowSetting,
   visibleScene,
 } from '@pascal-app/editor'
-import { CLAY_PALETTE, getSceneTheme, SCENE_THEMES, useViewer } from '@pascal-app/viewer'
+import {
+  CLAY_PALETTE,
+  getSceneTheme,
+  pointerLockSupported,
+  SCENE_THEMES,
+  useViewer,
+} from '@pascal-app/viewer'
 import {
   ArrowDown,
   ArrowUp,
@@ -76,10 +82,11 @@ function requestWalkthroughPointerLock() {
   }
   canvas.focus({ preventScroll: true })
 
-  if (document.pointerLockElement === canvas) return
+  // Without pointer lock (acde) the canvas is only focused; dragging turns the view.
+  if (!pointerLockSupported() || document.pointerLockElement === canvas) return
 
   try {
-    canvas.requestPointerLock?.()
+    canvas.requestPointerLock?.() // acde-compat: guarded
   } catch {
     return
   }

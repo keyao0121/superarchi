@@ -14,7 +14,7 @@
     "acde:prepare": "bun scripts/acde/prepare.ts",
     "acde:build": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde build",
     "acde:dev": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde dev",
-    "acde:test": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde test",
+    "acde:test": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde test --workers 1",
     "acde:install": "bun run acde:prepare && PASCAL_PORTABLE_BUILD=1 acde install"
   },
   "dependencies": {
@@ -54,6 +54,13 @@
   },
   "devDependencies": {
     "@dopame/acde-api": "https://pkgs.dopame.ai/acde/0.0.11/acde-api-0.0.11.tar.gz",
+    "@iconify-json/carbon": "^1.2.30",
+    "@iconify-json/charm": "^1.2.3",
+    "@iconify-json/icon-park-outline": "^1.2.4",
+    "@iconify-json/lucide": "^1.2.154",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/ph": "^1.2.2",
+    "@iconify-json/qlementine-icons": "^1.2.16",
     "@pascal/typescript-config": "*",
     "@types/howler": "^2.2.13",
     "@types/node": "^26.6.6",
@@ -62,6 +69,7 @@
     "agentation": "^3.1.2",
     "react-grab": "^0.2.0",
     "react-scan": "^0.5.7",
+    "sharp": "^0.35.5",
     "typescript": "7.0.2"
   }
 }
