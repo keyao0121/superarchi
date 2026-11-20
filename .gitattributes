@@ -1,0 +1,3 @@
+# Use Python tools for the language statistics shown on GitHub.
+* -linguist-detectable
+*.py linguist-detectable
